@@ -1,21 +1,18 @@
-from PyQt5.QtWidgets import *
-from PyQt5 import QtGui, QtWidgets
-from robot.RobotDiscrete import RobotDiscrete
-from robot.Robot import Mode
-
-from sim.framework import Framework
-
-from gui.gui import Ui_MainWindow
-import sys
-
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import matplotlib.pyplot as plt
-import numpy as np
 import logging
 import pickle
-
-import tkinter as tk
+import sys
 from tkinter import filedialog
+
+import matplotlib.pyplot as plt
+import numpy as np
+from PyQt5 import QtGui, QtWidgets
+from PyQt5.QtWidgets import *
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+from gui.gui import Ui_MainWindow
+from robot.Robot import Mode
+from robot.RobotDiscrete import RobotDiscrete
+from sim.framework import Framework
 
 
 class Ex(QMainWindow):
@@ -34,7 +31,6 @@ class Ex(QMainWindow):
         self.ui.start_learning_button.clicked.connect(self.clickedOnStartLearning)
         self.ui.stop_robot_button.clicked.connect(self.clickedOnStopRobot)
         self.ui.pause_learning_button.clicked.connect(self.clickedOnPauseLearning)
-        self.ui.choose_sim_real.activated.connect(self.handleComboBox)
         self.ui.execute_button.clicked.connect(self.clickedOnExecute)
         self.ui.save_policy_button.clicked.connect(self.clickedOnSave)
         self.ui.load_policy_button.clicked.connect(self.clickedOnLoad)
@@ -53,7 +49,6 @@ class Ex(QMainWindow):
         self.ui.servo_speed_slider.setValue(18)
 
         self.is_executing = False
-        self.ui.connected_label.setText("")
 
         self.graphicsView = QGraphicsView()
         self.graphicsView.setDragMode(QGraphicsView.ScrollHandDrag)
@@ -66,13 +61,11 @@ class Ex(QMainWindow):
         self.ui.verticalLayout_simu.addWidget(self.graphicsView)
 
         #  Parameters
-        self.real_robo_reward = False
-
 
         self.robot = RobotDiscrete()
         self.updateRobotAttributesFromGUI()
 
-        self.fw = Framework(self, self.real_robo_reward, self.robot, self.ui, self)
+        self.fw = Framework(self, self.robot, self.ui, self)
 
         self.ui.pause_learning_button.setEnabled(False)
         self.ui.stop_robot_button.setEnabled(False)
@@ -253,13 +246,6 @@ class Ex(QMainWindow):
         self.ui.cbInvertLearning.setChecked(self.invert_learning)
         self.ui.choose_learning_algorithm.setCurrentIndex(self.learning_algorithm)
 
-    def handleComboBox(self, index):
-        if index:
-            self.fw.set_real_robo_reward(True)
-            self.comm.connect_to_crawler()
-        else:
-            self.fw.set_real_robo_reward(False)
-            self.comm.terminate()
 
     def save_param_vector(self):
 
@@ -414,7 +400,6 @@ class Ex(QMainWindow):
 
     def disableWhileRunning(self):
         self.ui.start_learning_button.setEnabled(False)
-        self.ui.choose_sim_real.setEnabled(False)
         self.ui.param_min_deg_j1_txt.setEnabled(False)
         self.ui.param_max_deg_j1_txt.setEnabled(False)
         self.ui.param_min_deg_j2_txt.setEnabled(False)
@@ -435,7 +420,6 @@ class Ex(QMainWindow):
 
     def enableWhileNotRunning(self):
         self.ui.start_learning_button.setEnabled(True)
-        self.ui.choose_sim_real.setEnabled(True)
         self.ui.param_min_deg_j1_txt.setEnabled(True)
         self.ui.param_max_deg_j1_txt.setEnabled(True)
         self.ui.param_min_deg_j2_txt.setEnabled(True)

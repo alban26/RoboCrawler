@@ -105,8 +105,6 @@ class World:
         self.robot_sim.reset_velocity()
 
         reward = self.robot_sim.get_body_pos()[0] - robot_start_pos[0]
-        if self.use_real_robot:
-            reward = self.real_robo_reward() / 9
         if isinstance(self.robot, RobotDiscrete):
             if abs(reward) < self.reward_cap:  # cap reward to not learn from noise
                 reward = 0
@@ -114,25 +112,6 @@ class World:
         logging.debug("State: {}".format(self.robot.state))
         logging.debug("Reward: {}".format(reward))
 
-        return reward
-
-    def set_use_real_robo(self, use_real_robot):
-        """
-        Set if the real robot is used.
-        :param use_real_robot: boolean if real robot is used, otherwise only use simulator
-        :return:
-        """
-        self.use_real_robot = use_real_robot
-
-    def real_robo_reward(self):
-        """
-        Calculates the reward of the real robot.
-        :return: Returns reward of real robot
-        """
-        angles = self.robot.get_arm_states_degree()
-        total_distance = self.comm.do_action(str(angles[0]) + " " + str(angles[1]) + " " + str(angles[2]) + " " + str(angles[3]))
-        reward = total_distance - self.total_distance_old
-        self.total_distance_old = total_distance
         return reward
 
     def reset(self):

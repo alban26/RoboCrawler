@@ -81,7 +81,10 @@ class LearningThread(QtCore.QThread):
                 logging.debug("Finished executing")
             else:
                 if not self.is_finished_learning:
-                    self.is_finished_learning = self.learning_algorithm.learn(self.learning_steps, self.min_epsilon, self.max_epsilon, self.improve_every_steps, self.tricks, self.invert_learning, self.ui)
+                    self.is_finished_learning = self.learning_algorithm.learn(self.learning_steps, self.min_epsilon,
+                                                                              self.max_epsilon,
+                                                                              self.improve_every_steps, self.tricks,
+                                                                              self.invert_learning, self.ui)
                     if self.is_finished_learning:
                         logging.debug("Finished learning")
                         self.ui.execute_button.setEnabled(True)
@@ -93,7 +96,9 @@ class LearningThread(QtCore.QThread):
             logging.debug("Learning mode without pre-loaded policy:")
             logging.debug("is_finished_learning: {}\n".format(self.is_finished_learning))
             if not self.is_finished_learning:
-                self.is_finished_learning = self.learning_algorithm.learn(self.learning_steps, self.min_epsilon, self.max_epsilon, self.improve_every_steps, self.tricks, self.invert_learning, self.ui)
+                self.is_finished_learning = self.learning_algorithm.learn(self.learning_steps, self.min_epsilon,
+                                                                          self.max_epsilon, self.improve_every_steps,
+                                                                          self.tricks, self.invert_learning, self.ui)
                 if self.is_finished_learning:
                     logging.debug("Finished learning")
                     self.ui.execute_button.setEnabled(True)
@@ -113,7 +118,7 @@ class Framework:
     such as the learning algorithm, the graphical simulation and the connection towards the real robot.
     """
 
-    def __init__(self, window, real_robo, robot, ui, ex):
+    def __init__(self, window, robot, ui, ex):
         self.window = window
         self.renderer = PyQt5Draw.Pyqt5Draw(self)
         self.robot = robot
@@ -127,7 +132,6 @@ class Framework:
         # self.b2World.warmStarting = True
         # self.b2World.continuousPhysics = True
         # self.b2World.subStepping = True
-        self.real_robo = real_robo
 
         # Initial all
         self.robot_sim = RobotSim.RobotSim(self.robot, [0.2, 0.2], [(12.0, 1.0), (8.0, 1.0)], [1.0, 1.0], self.b2World)
@@ -138,11 +142,9 @@ class Framework:
         self.learning_thread = LearningThread(self.learning_algorithm, ui)
         self.learning_thread.draw_signal.connect(self.world.draw)
         self.world.set_draw_signal(self.learning_thread.draw_signal)
-        self.set_real_robo_reward(self.real_robo)
         self.reset()
 
-
-    def set_is_finished_learing(self, val = False):
+    def set_is_finished_learing(self, val=False):
         self.learning_thread.set_is_finished(val)
 
     def setPolicyAlreadyLoaded(self):
@@ -188,8 +190,6 @@ class Framework:
         self.screenSize = b2Vec2(0, 0)
         self.setCenter((0, 10.0 * 20.0))
         self.setZoom(4.0)
-        if self.world.use_real_robot:
-            self.world.real_robo_reward()
 
     def setCenter(self, value):
         """
@@ -223,10 +223,10 @@ class Framework:
         else:
             logging.debug("thread is running")
 
-    def save_policy(self,file_path,param_vector):
+    def save_policy(self, file_path, param_vector):
         self.learning_algorithm.save_policy(file_path, param_vector)
 
-    def load_policy(self,file_path):
+    def load_policy(self, file_path):
         self.learning_algorithm.load_policy(file_path)
 
     def get_pause(self):
@@ -243,7 +243,6 @@ class Framework:
         """
         self.learning_algorithm.set_pause(val)
 
-
     def set_stop(self, val=True):
         """
         Stops the algorithm from learning any further.
@@ -251,14 +250,6 @@ class Framework:
         :return:
         """
         self.learning_algorithm.set_stop(val)
-
-    def set_real_robo_reward(self, real_robo):
-        """
-        Use the real robots sensor as feedback
-        :param real_robo: real robot instance
-        :return:
-        """
-        self.world.set_use_real_robo(real_robo)
 
     def _Keyboard_Event(self, key, down=True):
         """
@@ -305,4 +296,3 @@ class Framework:
         :return:
         """
         pass
-
