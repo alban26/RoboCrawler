@@ -5,7 +5,7 @@ import logging
 from robot.RobotDiscrete import RobotDiscrete
 
 
-class Joint():
+class Joint:
     """
     Joint of the robots arms.
     """
@@ -36,7 +36,7 @@ class Joint():
         return [self.joint_body, self.joint_n_1_joint_n_joint]
 
 
-class RobotSim():
+class RobotSim:
     """
     Model in Box2D physic library of the simulated robot within the graphical interface.
     """
@@ -94,9 +94,9 @@ class RobotSim():
 
         self.body_wheel_joint = self.b2World.CreateRevoluteJoint(bodyA=self.body_body, bodyB=self.wheel_body,
                                                                  anchor=(
-                                                                 -self.body_size[0] / 1 + body_wheel_joint_margin_body[
-                                                                     0],
-                                                                 body_wheel_joint_margin_body[1]))
+                                                                     -self.body_size[0] / 1 +
+                                                                     body_wheel_joint_margin_body[0],
+                                                                     body_wheel_joint_margin_body[1]))
 
         # Robot arms with joints
         self.arms = []

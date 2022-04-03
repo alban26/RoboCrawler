@@ -19,8 +19,6 @@ class ValueIteration(LearningAlgorithm):
         super().__init__(myRobot, myWorld, ex)
         logging.debug("ValueIteration init: ".format())
 
-        # self.stopwatch = 0  # TODO: remove or needed?
-
     def reset(self):
         """
         Resets the learning process.

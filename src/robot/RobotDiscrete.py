@@ -32,13 +32,13 @@ class RobotDiscrete(Robot):
         for i, state_range_deg_joint in enumerate(self.state_range_deg_joints):
             self.state_lookuptable_joints.append(
                 np.deg2rad(np.linspace(state_range_deg_joint[0], state_range_deg_joint[1],
-                num=self.joints_states_num[i])))
+                                       num=self.joints_states_num[i])))
 
         # calculate all states
         range_per_joint = []
         for joint in self.arms_num * self.joints_states_num:
             range_per_joint.append(list(range(joint)))
-        self.all_states = np.array([i for i in itertools.product(*range_per_joint)])\
+        self.all_states = np.array([i for i in itertools.product(*range_per_joint)]) \
             .reshape(-1, self.arms_num, self.joints_per_arm_num)
 
         # mapping from a state to a statenr (all states are numbered)
@@ -129,8 +129,8 @@ class RobotDiscrete(Robot):
         self.state = np.array(self.state)
 
         logging.debug("RobotDiscrete init: joints_states_num={}, action size={}, state size={}, inital state={}".format(
-                      self.joints_states_num, len(self.diff_to_action.keys()), len(self.state_to_statenr.keys()),
-                      self.state))
+            self.joints_states_num, len(self.diff_to_action.keys()), len(self.state_to_statenr.keys()),
+            self.state))
 
     def apply_action(self, action):
         """

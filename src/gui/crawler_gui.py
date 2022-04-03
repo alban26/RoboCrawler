@@ -246,7 +246,6 @@ class Ex(QMainWindow):
         self.ui.cbInvertLearning.setChecked(self.invert_learning)
         self.ui.choose_learning_algorithm.setCurrentIndex(self.learning_algorithm)
 
-
     def save_param_vector(self):
 
         # GUI Radio Button
@@ -277,9 +276,10 @@ class Ex(QMainWindow):
              min_epsilon, max_epsilon, improve_every_steps, tricks, invert_learning, learning_algorithm])
 
     def set_gui_params_from_vec(self, gui_params):
-
         self.robo_mode, self.joint1_minimum_degree, self.joint1_maximum_degree, self.joint1_steps, \
-        self.joint2_minimum_degree, self.joint2_maximum_degree, self.joint2_steps, self.learning_steps, self.min_epsilon, self.max_epsilon, self.improve_every_steps, self.tricks, self.invert_learning, self.learning_algorithm = gui_params
+        self.joint2_minimum_degree, self.joint2_maximum_degree, self.joint2_steps, self.learning_steps, \
+        self.min_epsilon, self.max_epsilon, self.improve_every_steps, self.tricks, self.invert_learning, \
+        self.learning_algorithm = gui_params
 
     def clickedOnSave(self):
         file_path = filedialog.asksaveasfilename(
