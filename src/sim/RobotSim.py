@@ -1,6 +1,10 @@
+import math
+
+import numpy
 import numpy as np
 from Box2D import *
 import logging
+from collections import deque
 
 from robot.RobotDiscrete import RobotDiscrete
 
@@ -53,6 +57,12 @@ class RobotSim:
         body_mass = 1.0
         self.body_size = (22.0, 8)
         body_friction = 1.0
+
+        self.joint_switch_step_counter = 0
+        self.joint_diff = 0
+
+        self.joint_body_1_vertices = deque(maxlen=3)
+        self.joint_body_2_vertices = deque(maxlen=3)
 
         wheel_mass = 1.0
         self.wheel_radius = 2.5
@@ -118,15 +128,15 @@ class RobotSim:
                                                                                        joints_size[joint][1] / 1, 0)
 
                 joint_body_def.type = b2_dynamicBody
-                joint_body = self.b2World.CreateBody(joint_body_def)
+                self.joint_body = self.b2World.CreateBody(joint_body_def)
                 joint_box = b2PolygonShape(box=joints_size[joint])
                 joint_box_fixture = b2FixtureDef(shape=joint_box, categoryBits=0x0002, maskBits=0x0004)
                 joint_box_fixture.density = joints_mass[joint]
                 joint_box_fixture.friction = joints_friction[joint]
-                joint_body.CreateFixture(joint_box_fixture)
+                self.joint_body.CreateFixture(joint_box_fixture)
                 if joint == 0:  # Joint with body?
                     body_joint1_joint = self.b2World.CreateRevoluteJoint(
-                        bodyA=joint_body, bodyB=self.body_body,
+                        bodyA=self.joint_body, bodyB=self.body_body,
                         localAnchorA=(-(joints_size[joint][0] / 1 - joints_size[joint][1] / 1), 0),
                         localAnchorB=(self.body_size[0] / 1 - body_arm1_joint_margin_body[0],
                                       self.body_size[1] / 1 - body_arm1_joint_margin_body[1]),
@@ -136,10 +146,10 @@ class RobotSim:
                         enableMotor=True,
                         maxMotorTorque=1000000.0,
                         motorSpeed=0.0)
-                    joints.append(Joint(joint_body, body_joint1_joint))
+                    joints.append(Joint(self.joint_body, body_joint1_joint))
                 else:
                     joint_n_1_joint_n_joint = self.b2World.CreateRevoluteJoint(
-                        bodyA=joint_body, bodyB=joints[joint - 1].joint_body,
+                        bodyA=self.joint_body, bodyB=joints[joint - 1].joint_body,
                         localAnchorA=(-(joints_size[joint][0] / 1 - joints_size[joint][1] / 1), 0),
                         localAnchorB=(joints_size[joint - 1][0] / 1 - joints_size[joint - 1][1] / 1, 0),
                         lowerAngle=self.robot_model.state_range_rad_joints[joint][0],
@@ -148,7 +158,7 @@ class RobotSim:
                         enableMotor=True,
                         maxMotorTorque=1000000.0,
                         motorSpeed=0.0)
-                    joints.append(Joint(joint_body, joint_n_1_joint_n_joint))
+                    joints.append(Joint(self.joint_body, joint_n_1_joint_n_joint))
             self.arms.append(joints)
 
         logging.debug("RobotSim init: "
@@ -214,6 +224,99 @@ class RobotSim:
         :return: robots body position (x, y)
         """
         return self.body_body.position.x, self.body_body.position.y
+
+    def opposite_signs(self, x, y):
+        """
+        Checks if signs of given numbers are different
+        :param x: old value
+        :param y: new value
+        :return: True if change of sign occurs
+        """
+        x = int(round(x, 0))
+        y = int(round(y, 0))
+        return (x ^ y) < 0
+
+    def get_joint_distance(self):
+        """
+        Calculates the vector length between the
+        2nd revolute joints of the arms
+        :return: vector length between 2nd revolute
+        joint of arm1 and 2nd revolute joint of arm2
+        """
+        joint_2 = []
+        for joints in self.arms:
+            joint_2.append((joints[1].get_joint_between_joints().anchorB[0],
+                            joints[1].get_joint_between_joints().anchorB[1]))
+        x, y = numpy.subtract(joint_2[1], joint_2[0])
+        return math.hypot(x, y)
+
+    def joint_vertices_y_axes(self):
+        """
+        Registers the y-Axes of the
+        joint body of the arms
+        and check whether a step is done
+        and counts up in each iteration
+        :return: number of steps
+        """
+        steps_done = 0
+        for idx, joints in enumerate(self.arms):
+            point_1 = joints[1].joint_body.fixtures[0].shape.vertices[1]
+            point_2 = joints[1].joint_body.fixtures[0].shape.vertices[2]
+
+            p1_p2 = (joints[1].joint_body.GetWorldPoint(point_1),
+                     joints[1].joint_body.GetWorldPoint(point_2))
+            if idx == 0:  # first leg
+                vertices_pair = []
+                for point in p1_p2:  # left point and right point
+                    vertices_pair.append(point[1])
+                self.joint_body_1_vertices.append(vertices_pair)
+                if len(self.joint_body_1_vertices) >= 3:
+                    if self.step_done(self.joint_body_1_vertices):
+                        steps_done += 1
+            else:  # second leg
+                vertices_pair = []
+                for point in p1_p2:  # left point and right point
+                    vertices_pair.append(point[1])
+                self.joint_body_2_vertices.append(vertices_pair)
+                if len(self.joint_body_2_vertices) >= 3:
+                    if self.step_done(self.joint_body_2_vertices):
+                        steps_done += 1
+        return steps_done
+
+    def step_done(self, step_sequence):
+        """
+        Detect whether a step is done from
+        joint positions
+        :param step_sequence:
+        :return: True if step is done
+        """
+        if (step_sequence[0][0] < step_sequence[0][1] < 2 and
+                2 > step_sequence[2][0] > step_sequence[2][1]):
+            return True
+        else:
+            return False
+
+    def joints_switched(self):
+        """
+        Assuming that steps are done when
+        2nd joints of the arms are oscillating
+        :return:
+        """
+        joint_2 = []
+        for joints in self.arms:
+            joint_2.append(joints[1].get_joint_between_joints().anchorB[1])
+        new_joint_y_diff = joint_2[0] - joint_2[1]
+        if self.opposite_signs(self.joint_diff, new_joint_y_diff):
+            return True
+
+    def step_counter_by_joint_switch(self):
+        """
+        Counts up when revolute joints of the arms
+        are oscillating
+        :return:
+        """
+        if self.joints_switched:
+            self.joint_switch_step_counter += 1
 
     def update(self):
         """

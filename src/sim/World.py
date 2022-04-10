@@ -26,7 +26,7 @@ class World:
         self.robot_sim = robot_sim
         self.b2World = b2World
         self.ex = ex
-
+        self.steps = 0
         self.total_distance_old = 0
         self.use_real_robot = False
 
@@ -83,16 +83,22 @@ class World:
 
         robot_start_pos = self.robot_sim.get_body_pos()
         time_steps = 0
+        counter = 0
         while True:  # Simulate until next/goal state of robot is reached
             if isinstance(self.robot, RobotDiscrete):
                 if self.robot_sim.update():
                     break
 
+            if counter % 40000 == 0:
+                self.steps += self.robot_sim.joint_vertices_y_axes()
+
+            counter += 1
             if self.settings.hz > 0.0:
                 time_step = 1.0 / self.settings.hz
             else:
                 time_step = 0.0
             self.b2World.Step(time_step, self.settings.velocityIterations, self.settings.positionIterations)
+
             self.b2World.ClearForces()
 
             if draw_robot:
@@ -104,7 +110,15 @@ class World:
         # With the resetting, it's a Markovian decisionproces.
         self.robot_sim.reset_velocity()
 
-        reward = self.robot_sim.get_body_pos()[0] - robot_start_pos[0]
+
+        # step_length_reward = 0
+        # if self.robot_sim.robot_model.arms_num > 1:
+        #     step_length_reward = self.robot_sim.get_joint_distance() * 0.05
+        #     # 0.05
+        #     if self.robot_sim.joints_switched():
+        #         step_count_reward = 0.05
+        print("Steps done: " + str(self.steps))
+        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0])
         if isinstance(self.robot, RobotDiscrete):
             if abs(reward) < self.reward_cap:  # cap reward to not learn from noise
                 reward = 0
