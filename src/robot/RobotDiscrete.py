@@ -1,7 +1,9 @@
-from robot.Robot import Robot, Mode
 import itertools
 import logging
+
 import numpy as np
+
+from robot.Robot import Robot, Mode
 
 
 class RobotDiscrete(Robot):
@@ -68,26 +70,12 @@ class RobotDiscrete(Robot):
                     self.diff_to_action[tuple(c1)] = 2 * (j * self.arms_num + i)
                     self.diff_to_action[tuple(c2)] = 2 * (j * self.arms_num + i) + 1
 
-        if self.mode is Mode.ONE_ACTION_PER_ARM or self.mode is Mode.ALL_POSSIBLE:
+        if self.mode is Mode.ALL_POSSIBLE:
             actions_per_arm = []
-            if self.mode is Mode.ONE_ACTION_PER_ARM:
-                # diff_zero = (0,) * self.joints_per_arm_num
-                # actions_per_arm.append(diff_zero)
-                for j in range(self.joints_per_arm_num):
-                    diff_pos = [0] * (self.joints_per_arm_num - 1)
-                    diff_neg = [0] * (self.joints_per_arm_num - 1)
-                    diff_pos.insert(j, 1)
-                    diff_neg.insert(j, -1)
-                    diff_pos = tuple(diff_pos)
-                    diff_neg = tuple(diff_neg)
-                    actions_per_arm.append(diff_pos)
-                    actions_per_arm.append(diff_neg)
-            elif self.mode is Mode.ALL_POSSIBLE:
-                a = [0, 1, -1]
-                b = [a] * self.joints_per_arm_num
-                for e in itertools.product(*b):
-                    actions_per_arm.append(e)
-
+            a = [0, 1, -1]
+            b = [a] * self.joints_per_arm_num
+            for e in itertools.product(*b):
+                actions_per_arm.append(e)
             list_for_product = self.arms_num * [actions_per_arm]
             for i, diff in enumerate(itertools.product(*list_for_product)):
                 self.diff_to_action[diff] = i
@@ -145,10 +133,11 @@ class RobotDiscrete(Robot):
             arm = np.array(np.where(np.abs(np.sum(action, 1))))[0][0]
             logging.debug("Moved arm {} from state {} to {}".format(arm, self.state[arm], (self.state + action)[arm]))
         elif self.diff_to_action[tuple([tuple(j) for j in action])] not in self.get_possible_actions(self.state):
-            logging.error("Action is not valid!")
+            # logging.error("Action is not valid!")
             return self.state.copy()
         else:
-            logging.debug("Moved from state {} to {}".format(self.state, (self.state + action)))
+            pass
+            # logging.debug("Moved from state {} to {}".format(self.state, (self.state + action)))
         self.state += action
         return self.state.copy()
 

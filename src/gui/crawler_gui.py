@@ -27,6 +27,7 @@ class Ex(QMainWindow):
         self.ui.setupUi(self)
         #  Thread
         # self.myThread = threading.Thread(target=self.createThreadForLearning)
+        self.serialEnabled = False
 
         self.ui.start_learning_button.clicked.connect(self.clickedOnStartLearning)
         self.ui.stop_robot_button.clicked.connect(self.clickedOnStopRobot)
@@ -37,16 +38,16 @@ class Ex(QMainWindow):
 
         self.ui.param_min_deg_j1_txt.setText("-10")
         self.ui.param_max_deg_j1_txt.setText("40")
-        self.ui.param_deg_steps_j1_txt.setText("3")
+        self.ui.param_deg_steps_j1_txt.setText("6")
         self.ui.param_min_deg_j2_txt.setText("40")
         self.ui.param_max_deg_j2_txt.setText("140")
-        self.ui.param_deg_steps_j2_txt.setText("5")
+        self.ui.param_deg_steps_j2_txt.setText("10")
         self.ui.param_learning_steps_txt.setText("250")
         self.ui.epsilon_min_txt.setText("0.3")
         self.ui.epsilon_max_txt.setText("1.0")
         self.ui.param_improve_every_steps_txt.setText("1")
-        self.ui.speed_slider.setValue(10)
-        self.ui.servo_speed_slider.setValue(18)
+        self.ui.speed_slider.setValue(0)
+        self.ui.servo_speed_slider.setValue(0)
 
         self.is_executing = False
 
@@ -89,7 +90,7 @@ class Ex(QMainWindow):
         self.draw_value_sum()
         QMainWindow.resizeEvent(self, event)
 
-    def update_ui_step(self, steps, epsilon):
+    def update_ui_step(self, steps, epsilon=1):
         """
         Update step label in GUI
         :param steps: amount of learning iterations
@@ -132,8 +133,6 @@ class Ex(QMainWindow):
         # GUI Radio Button
         if self.ui.one_arm_rb.isChecked():
             self.robo_mode = Mode.ONE_ACTION
-        if self.ui.two_arm_one_action_rb.isChecked():
-            self.robo_mode = Mode.ONE_ACTION_PER_ARM
         if self.ui.two_arm_all_action_rb.isChecked():
             self.robo_mode = Mode.ALL_POSSIBLE
 
@@ -218,7 +217,7 @@ class Ex(QMainWindow):
             self.improve_every_steps = 1
             self.ui.param_learning_steps_txt.setText("1")
 
-        self.tricks = self.ui.cbTricks.isChecked()
+#        self.tricks = self.ui.cbTricks.isChecked()
         self.invert_learning = self.ui.cbInvertLearning.isChecked()
 
         self.learning_algorithm = self.ui.choose_learning_algorithm.currentIndex()
@@ -227,8 +226,6 @@ class Ex(QMainWindow):
 
         if self.robo_mode == Mode.ONE_ACTION:
             self.ui.one_arm_rb.setChecked(True)
-        if self.robo_mode == Mode.ONE_ACTION_PER_ARM:
-            self.ui.two_arm_one_action_rb.setChecked(True)
         if self.robo_mode == Mode.ALL_POSSIBLE:
             self.ui.two_arm_all_action_rb.setChecked(True)
 
@@ -242,7 +239,6 @@ class Ex(QMainWindow):
         self.ui.epsilon_min_txt.setText(str(self.min_epsilon))
         self.ui.epsilon_max_txt.setText(str(self.max_epsilon))
         self.ui.param_improve_every_steps_txt.setText(str(self.improve_every_steps))
-        self.ui.cbTricks.setChecked(self.tricks)
         self.ui.cbInvertLearning.setChecked(self.invert_learning)
         self.ui.choose_learning_algorithm.setCurrentIndex(self.learning_algorithm)
 
@@ -251,8 +247,6 @@ class Ex(QMainWindow):
         # GUI Radio Button
         if self.ui.one_arm_rb.isChecked():
             robot_mode = Mode.ONE_ACTION
-        if self.ui.two_arm_one_action_rb.isChecked():
-            robot_mode = Mode.ONE_ACTION_PER_ARM
         if self.ui.two_arm_all_action_rb.isChecked():
             robot_mode = Mode.ALL_POSSIBLE
 
@@ -266,19 +260,18 @@ class Ex(QMainWindow):
         min_epsilon = float(self.ui.epsilon_min_txt.text())
         max_epsilon = float(self.ui.epsilon_max_txt.text())
         improve_every_steps = int(self.ui.param_improve_every_steps_txt.text())
-        tricks = self.ui.cbTricks.isChecked()
         invert_learning = self.ui.cbInvertLearning.isChecked()
         learning_algorithm = self.ui.choose_learning_algorithm.currentIndex()
 
         # learning steps is 0 by default when saving, so that the user has to configure it himself if he wants to resume learning
         return np.array(
             [robot_mode, joint1_min, joint1_max, joint1_steps, joint2_min, joint2_max, joint2_steps, learning_steps,
-             min_epsilon, max_epsilon, improve_every_steps, tricks, invert_learning, learning_algorithm])
+             min_epsilon, max_epsilon, improve_every_steps, invert_learning, learning_algorithm])
 
     def set_gui_params_from_vec(self, gui_params):
         self.robo_mode, self.joint1_minimum_degree, self.joint1_maximum_degree, self.joint1_steps, \
         self.joint2_minimum_degree, self.joint2_maximum_degree, self.joint2_steps, self.learning_steps, \
-        self.min_epsilon, self.max_epsilon, self.improve_every_steps, self.tricks, self.invert_learning, \
+        self.min_epsilon, self.max_epsilon, self.improve_every_steps, self.invert_learning, \
         self.learning_algorithm = gui_params
 
     def clickedOnSave(self):
@@ -341,7 +334,6 @@ class Ex(QMainWindow):
         self.fw.set_learning_steps(self.learning_steps)
         self.fw.set_epsilon_range(self.min_epsilon, self.max_epsilon)
         self.fw.set_improve_every_steps(self.improve_every_steps)
-        self.fw.set_tricks(self.tricks)
         self.fw.set_invert_learning(self.invert_learning)
         self.fw.set_learning_algorithm(self.learning_algorithm)
 
@@ -370,7 +362,6 @@ class Ex(QMainWindow):
             self.fw.set_learning_steps(self.learning_steps)
             self.fw.set_epsilon_range(self.min_epsilon, self.max_epsilon)
             self.fw.set_improve_every_steps(self.improve_every_steps)
-            self.fw.set_tricks(self.tricks)
             self.fw.set_invert_learning(self.invert_learning)
             self.fw.set_learning_algorithm(self.learning_algorithm)
 
@@ -412,10 +403,8 @@ class Ex(QMainWindow):
         self.ui.param_learning_steps_txt.setEnabled(False)
         self.ui.param_improve_every_steps_txt.setEnabled(False)
         self.ui.one_arm_rb.setEnabled(False)
-        self.ui.two_arm_one_action_rb.setEnabled(False)
         self.ui.two_arm_all_action_rb.setEnabled(False)
         self.ui.cbInvertLearning.setEnabled(False)
-        self.ui.cbTricks.setEnabled(False)
         self.ui.choose_learning_algorithm.setEnabled(False)
 
     def enableWhileNotRunning(self):
@@ -432,10 +421,8 @@ class Ex(QMainWindow):
         self.ui.param_learning_steps_txt.setEnabled(True)
         self.ui.param_improve_every_steps_txt.setEnabled(True)
         self.ui.one_arm_rb.setEnabled(True)
-        self.ui.two_arm_one_action_rb.setEnabled(True)
         self.ui.two_arm_all_action_rb.setEnabled(True)
         self.ui.cbInvertLearning.setEnabled(True)
-        self.ui.cbTricks.setEnabled(True)
         self.ui.choose_learning_algorithm.setEnabled(True)
 
 

@@ -5,7 +5,6 @@ from enum import Enum
 
 class Mode(Enum):
     ONE_ACTION = 0  # only one action in each step allowed
-    ONE_ACTION_PER_ARM = 1  # one action per arm in each step
     ALL_POSSIBLE = 2  # all joints are allowed to move in one step
 
 

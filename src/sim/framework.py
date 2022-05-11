@@ -1,24 +1,26 @@
-import sys
-
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt
-from PyQt5 import QtGui, QtCore
+import logging
 
 from Box2D import *
+from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
 
-import sim.settings as settings
+import learning.DQN.DQNLearning as DQNLearning
+import learning.QLearning as QLearning
+import learning.WalkAround as WalkAround
 import sim.PyQt5Draw as PyQt5Draw
 import sim.World as World
-import learning.ValueIteration as ValueIteration
-import learning.QLearning as QLearning
-import robot.Robot as Robot
+import sim.settings as settings
+from learning import ValueIteration
 from sim import RobotSim
-import logging
 
 """
 Code is adapted from the official pybox2d example:
 https://github.com/pybox2d/pybox2d/blob/master/examples/backends/pyqt4_framework.py
 """
+
+# Learn = WalkAround.WalkAround
+
+# Learn = ValueIteration.ValueIteration
 
 
 class LearningThread(QtCore.QThread):
@@ -59,8 +61,8 @@ class LearningThread(QtCore.QThread):
     def set_is_finished(self, val=False):
         self.is_finished_learning = val
 
-    def set_tricks(self, tricks):
-        self.tricks = tricks
+    # def set_tricks(self, tricks):
+    #     self.tricks = tricks
 
     def set_invert_learning(self, invert_learning):
         self.invert_learning = invert_learning
@@ -83,7 +85,7 @@ class LearningThread(QtCore.QThread):
                 if not self.is_finished_learning:
                     self.is_finished_learning = self.learning_algorithm.learn(self.learning_steps, self.min_epsilon,
                                                                               self.max_epsilon,
-                                                                              self.improve_every_steps, self.tricks,
+                                                                              self.improve_every_steps,
                                                                               self.invert_learning, self.ui)
                     if self.is_finished_learning:
                         logging.debug("Finished learning")
@@ -98,7 +100,7 @@ class LearningThread(QtCore.QThread):
             if not self.is_finished_learning:
                 self.is_finished_learning = self.learning_algorithm.learn(self.learning_steps, self.min_epsilon,
                                                                           self.max_epsilon, self.improve_every_steps,
-                                                                          self.tricks, self.invert_learning, self.ui)
+                                                                          self.invert_learning, self.ui)
                 if self.is_finished_learning:
                     logging.debug("Finished learning")
                     self.ui.execute_button.setEnabled(True)
@@ -159,8 +161,8 @@ class Framework:
     def set_improve_every_steps(self, improve_every_steps):
         self.learning_thread.set_improve_every_steps(improve_every_steps)
 
-    def set_tricks(self, tricks):
-        self.learning_thread.set_tricks(tricks)
+    # def set_tricks(self, tricks):
+    #     self.learning_thread.set_tricks(tricks)
 
     def set_invert_learning(self, invert_learning):
         self.learning_thread.set_invert_learning(invert_learning)
@@ -170,6 +172,10 @@ class Framework:
             self.learning_algorithm = ValueIteration.ValueIteration(self.world.robot, self.world, self.ex)
         elif learning_algorithm == 1:
             self.learning_algorithm = QLearning.QLearning(self.world.robot, self.world, self.ex)
+        elif learning_algorithm == 2:
+            self.learning_algorithm = DQNLearning.DQNLearning(self.world.robot, self.world, self.ex)
+        elif learning_algorithm == 3:
+            self.learning_algorithm = WalkAround.WalkAround(self.world.robot, self.world, self.ex)
 
         self.learning_thread.set_learning_algorithm(self.learning_algorithm)
         self.reset()

@@ -21,7 +21,7 @@ class World:
         """
         self.renderer = renderer
         self.settings = settings
-        self.reward_cap = 1  # cap reward under 1 to 0
+        self.reward_cap = 0.2  # cap reward under 1 to 0
         self.robot = robot
         self.robot_sim = robot_sim
         self.b2World = b2World
@@ -50,7 +50,7 @@ class World:
         groundBodyDef = b2BodyDef()
         groundBodyDef.position = (0, -4)
         groundBody = self.b2World.CreateBody(groundBodyDef)
-        groundBox = b2PolygonShape(box=(2000, 4))
+        groundBox = b2PolygonShape(box=(2000000, 4))
         groundBoxFixture = b2FixtureDef(shape=groundBox, categoryBits=0x0004, maskBits=0x0002)
         groundBody.CreateFixture(groundBoxFixture)
 
@@ -74,6 +74,28 @@ class World:
     def get_params(self):
         return self.ex.ui.cbDrawRobot.isChecked(), float(self.ex.ui.speed_slider.value()) / 10000
 
+    def reset_sim(self):
+        draw_robot, speed = self.get_params()
+        while True:
+            if isinstance(self.robot, RobotDiscrete):
+                if self.robot_sim.update():
+                    break
+            if self.settings.hz > 0.0:
+                time_step = 1.0 / self.settings.hz
+            else:
+                time_step = 0.0
+            self.b2World.Step(time_step, self.settings.velocityIterations, self.settings.positionIterations)
+
+            self.b2World.ClearForces()
+
+            if draw_robot:
+                self.draw_signal.emit()  # calls self.draw() in other thread with render context (Qt)
+
+        self.robot_sim.reset_velocity()
+
+    def set_vel(self):
+        self.robot_sim.set_vel()
+
     def step_reward(self):
         """
         Steps and renders until goal state is reached.
@@ -82,15 +104,18 @@ class World:
         draw_robot, speed = self.get_params()
 
         robot_start_pos = self.robot_sim.get_body_pos()
-        time_steps = 0
+        steps = 0
         counter = 0
+        # start = time.time()
         while True:  # Simulate until next/goal state of robot is reached
             if isinstance(self.robot, RobotDiscrete):
                 if self.robot_sim.update():
                     break
 
-            if counter % 40000 == 0:
-                self.steps += self.robot_sim.joint_vertices_y_axes()
+            if counter % 100 == 0:
+                self.robot_sim.step_counter()
+                self.robot_sim.collect_steps()
+                self.robot_sim.collect_angles()
 
             counter += 1
             if self.settings.hz > 0.0:
@@ -104,29 +129,36 @@ class World:
             if draw_robot:
                 self.draw_signal.emit()  # calls self.draw() in other thread with render context (Qt)
             time.sleep(speed)  # parameter can be used to step slower.
-            time_steps += 1
+            steps += 1
+        # end = time.time()
 
         # Without resetting velocity the reward of the next state is influenced by the current state.
         # With the resetting, it's a Markovian decisionproces.
         self.robot_sim.reset_velocity()
 
+        # print("Steps " + str(steps) + " in " + str(round(end-start, 4)) + " Sekunden")
 
-        # step_length_reward = 0
-        # if self.robot_sim.robot_model.arms_num > 1:
-        #     step_length_reward = self.robot_sim.get_joint_distance() * 0.05
-        #     # 0.05
-        #     if self.robot_sim.joints_switched():
-        #         step_count_reward = 0.05
-        print("Steps done: " + str(self.steps))
-        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0])
-        if isinstance(self.robot, RobotDiscrete):
-            if abs(reward) < self.reward_cap:  # cap reward to not learn from noise
-                reward = 0
+        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0]) - (self.get_steps_done() * 1.09)
 
-        logging.debug("State: {}".format(self.robot.state))
-        logging.debug("Reward: {}".format(reward))
+        # self.print_vel()
+
+        # if isinstance(self.robot, RobotDiscrete):
+        #     if abs(reward) < self.reward_cap:  # cap reward to not learn from noise
+        #         reward = 0
+
+        # logging.debug("State: {}".format(self.robot.state))
+        # logging.debug("Reward: {}".format(reward))
 
         return reward
+
+    def get_steps_done(self):
+        return self.robot_sim.get_steps_done()
+
+    def draw_steps(self):
+        self.robot_sim.draw_steps()
+
+    def draw_angles(self):
+        self.robot_sim.draw_angles()
 
     def reset(self):
         """

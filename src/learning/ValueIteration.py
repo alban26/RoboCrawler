@@ -1,109 +1,113 @@
-import numpy as np
 import logging
+import pickle
+import random
 import time
+from datetime import datetime
+from os import listdir
+from os.path import isfile, join
+
+import numpy as np
+from scipy import stats
+
 from learning.LearningAlgorithm import LearningAlgorithm
 
 
 class ValueIteration(LearningAlgorithm):
-    """
-    Value Iteration for reinforcement learning of the robot.
-    """
-
-    gamma = 0.9
+    GAMMA = 0.995
 
     def __init__(self, myRobot, myWorld, ex):
-        """
-        :param myRobot: robot as RobotDiscrete
-        :param myWorld: World
-        """
+
+        # In der Klasse Learning Algorithm sind myRobot und myWorld
+        # als Klassenvariablen hinterlegt.
+        # Per super() wird bei der Instanziierung der Klasse
+        # ValueIteration ebenfalls LearningAlgorithm instanziiert
+        # und somit enstehen dann auch die Instanzvariablen
+        # myRobot und myWorld
         super().__init__(myRobot, myWorld, ex)
-        logging.debug("ValueIteration init: ".format())
+        self.reward = None
+        self.policy = None
+        self.value = None
+        self.last_action_diff = None
 
     def reset(self):
-        """
-        Resets the learning process.
-        :return:
-        """
+
         super().reset()
-        # value function, V(s) = 0 at the beginning
+
         self.value = np.zeros(self.myRobot.joints_states_num * self.myRobot.arms_num)
         self.policy = np.zeros(self.myRobot.joints_states_num * self.myRobot.arms_num)
         self.reward = np.zeros(self.myRobot.joints_states_num * self.myRobot.arms_num + [self.myRobot.action_size()])
-
+        self.std_dev = None
         self.state = self.myRobot.get_state()
         self.last_action_diff = np.zeros(self.state.shape)
 
-    def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, tricks, invert_learning, ui):
-        """
-        Learns the robot with Value Iteration.
-        :param steps: number of iterations/steps
-        :param min_epsilon
-        :param max_epsilon: bracket around possible epsilon values for xi-decision
-        :return: Returns bool if learning has finished or stopped
-        """
+    def get_all_possible_state_action(self):
+        state_action_pairs = []
+        for state in self.myRobot.get_all_states():
+            for action in self.myRobot.get_possible_actions(state):
+                state_action_pairs.append((state, action))
+        random.shuffle(state_action_pairs)
+        return state_action_pairs
 
-        for _ in range(steps):
-            if self.stop:
-                return False
-            while self.pause:
-                self.myWorld.step_reward()
-                time.sleep(0.1)
+    def calc_reward(self):
+        all_possible_state_action_pairs = self.get_all_possible_state_action().copy()
+        reward_tables = []
+        k = 1
+        for _ in range(k):
+            n = 0
+            N = len(all_possible_state_action_pairs)
+            for state_action in all_possible_state_action_pairs:
+                self.myRobot.state = state_action[0].copy()
+                self.state = state_action[0].copy()
+                self.myWorld.reset_sim()
+                action_diff = self.myRobot.action_to_diff[state_action[1]]
 
-            logging.debug("Step: {}".format(self.steps))
+                next_state = self.myRobot.apply_action(action_diff)
 
-            self.epsilon = (1 - (self.steps / steps)) * (max_epsilon - min_epsilon) + min_epsilon
-            logging.debug("Epsilon: {}".format(self.epsilon))
+                action_diff = np.array(action_diff)
+                reward = self.myWorld.step_reward()
 
-            logging.debug("Value Table:\n{}".format(self.value))
+                self.reward[tuple(state_action[0].flatten()) + (state_action[1],)] = reward
 
-            xi = np.random.random()
-            if xi < self.epsilon:
-                # exploration
-                possible_actions = self.myRobot.get_possible_actions(self.state)
-                a_forward = possible_actions[np.random.randint(0, len(possible_actions))]
-            else:
-                # exploitation
-                a_forward = self.get_greedy_action(self.state)
-            a_forward_diff = np.array(self.myRobot.action_to_diff[a_forward])
+                self.last_action_diff = action_diff
+                n += 1
+                if n % 1000 == 0:
+                    print('\rIteration {}/{}'.format(n, N), end="")
 
-            successor_state = self.myRobot.apply_action(self.myRobot.action_to_diff[a_forward])
+            reward_tables.append(self.reward)
+            print(reward_tables)
 
-            # reward from world and some extra reward for not changing the joint direction => longer moves
-            reward = self.myWorld.step_reward() + np.sum(np.clip(self.last_action_diff * a_forward_diff, 0, 1)) * 1.0
-            if invert_learning:
-                reward = -reward
+        # Mittelt die Reward Tabellen
+        reward_mean = np.zeros(self.reward.shape)
+        for rt in reward_tables:
+            reward_mean += rt
+        self.reward = reward_mean / k
 
-            self.reward[tuple(self.state.flatten()) + (a_forward,)] = reward
-            if tricks:
-                # Trick 1, arms are symmetric (only useful for multiple arms):
-                if self.myRobot.arms_num == 2:
-                    state_mirrored = tuple(np.roll(self.state, 1, axis=0).flatten())
-                    a_forward_mirrored = self.myRobot.get_action_of_diff(np.roll(a_forward_diff, 1, axis=0))
-                    self.reward[state_mirrored + (a_forward_mirrored,)] = reward
+        save_reward_string = datetime.now().strftime("%M_%S_%MS")
+        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-610_109-Schritt-04-150.pkl", "wb"))
 
-                # Trick 2: reverse action has reward * (-1) (always useful):
-                a_reverse = self.myRobot.get_action_reverse(a_forward)
-                self.reward[tuple(successor_state.flatten()) + (a_reverse,)] = -reward
-                if self.myRobot.arms_num == 2:
-                    successor_state_mirrored = tuple(np.roll(successor_state, 1, axis=0).flatten())
-                    a_reverse_mirrored = self.myRobot.get_action_of_diff(
-                        np.roll(self.myRobot.action_to_diff[a_reverse], 1, axis=0))
-                    self.reward[successor_state_mirrored + (a_reverse_mirrored,)] = -reward  # Trick 1
+    def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
+        if self.stop:
+            return False
+        while self.pause:
+            self.myWorld.step_reward()
+            time.sleep(0.1)
 
-            if self.steps % improve_every_steps == 0:
-                self.improve_value_and_policy()
+        # self.calc_reward()
+        self.reward = self.load_rewards()
+        # self.reward = self.load_rewards_without_outliers()
 
-            self.state = successor_state
-            self.last_action_diff = a_forward_diff
-            self.steps += 1
+        # for x in np.nditer(self.reward, op_flags=['readwrite']):
+        #     if abs(x) < 0:
+        #         x[...] = 0
+        self.save_reward_as_txt()
 
-            self.ex.update_ui_step(self.steps, self.epsilon)
-
+        for i in range(steps):
+            print(i)
+            self.improve_value_and_policy()
+            self.ex.update_ui_step(self.steps)
+        self.save_value_as_txt()
         self.ex.update_ui_finished()
-
         self.print_value_table()
-        self.print_policy_table()
-
         return True
 
     def get_policy(self):
@@ -120,13 +124,90 @@ class ValueIteration(LearningAlgorithm):
         Executes learned policy in an endless loop.
         :return:
         """
+
         while not self.stop:
             while self.pause and not self.stop:
                 time.sleep(0.1)
             a = self.get_greedy_action(self.state)
             successor_state = self.myRobot.apply_action(self.myRobot.action_to_diff[a])
-            _ = self.myWorld.step_reward()
+            rew = self.myWorld.step_reward()
+            # print(rew)
             self.state = successor_state
+        self.myWorld.draw_steps()
+        self.myWorld.draw_angles()
+
+    def load_rewards(self):
+        reward_mean = np.zeros(self.reward.shape)
+        std_devs = []
+        files = [f for f in listdir("../rewards") if isfile(join("../rewards", f))]
+        for file in files:
+            opentxt = f"../rewards/{file}"
+            savetxt = f"../single_reward_as_txt/{file}.txt"
+            single_reward = pickle.load(open(opentxt, "rb"))
+            self.save_reward_as_txt(single_reward=single_reward, txt=savetxt)
+            reward_mean += single_reward
+            std_devs.append(single_reward)
+        self.std_dev = np.array(np.std(std_devs, axis=0))
+        self.print_std_dev()
+        return reward_mean / len(files)
+
+    def print_std_dev(self):
+        std_devs = self.std_dev.flatten()
+        std_devs_without_zeros = std_devs[std_devs != 0]
+        std_dev = np.std(std_devs_without_zeros)
+        std_mean = np.mean(std_devs_without_zeros)
+        print("Erwartungswert der Standardabweichungen: " + str(std_mean))
+        print("Standardabweichung davon :" + str(std_dev))
+
+    def load_rewards_without_outliers(self):
+        vfunc = np.vectorize(self.my_func)
+        std_devs = []
+        rewards = []
+        files = [f for f in listdir("../rewards") if isfile(join("../rewards", f))]
+        for file in files:
+            opentxt = f"../rewards/{file}"
+            savetxt = f"../single_reward_as_txt/{file}.txt"
+            single_reward = pickle.load(open(opentxt, "rb"))
+            self.save_reward_as_txt(single_reward=single_reward, txt=savetxt)
+            rewards.append(single_reward)
+            std_devs.append(single_reward)
+        self.std_dev = np.array(np.std(std_devs, axis=0))
+        self.print_std_dev()
+        return vfunc(*rewards)
+
+    def my_func(self, *rewards):
+        return stats.trim_mean([*rewards], 0.1)
+
+    def save_value_as_txt(self):
+        value_size = len(self.value.shape)
+        with open("value_as_text.txt", "w") as text_file:
+            for idx, value in np.ndenumerate(self.value):
+                text_file.write("Zustand %s -> Value %s \n" % (
+                    idx[0:value_size], value))
+
+    def save_reward_as_txt(self, single_reward=None, txt="reward_as_text.txt"):
+        if single_reward is None:
+            if self.std_dev is not None:
+                reward = self.reward
+                reward_size = len(reward.shape)
+                with open(txt, "w") as text_file:
+                    for idx, value in np.ndenumerate(reward):
+                        text_file.write("Zustand %s : Aktion %s -> Reward %s | Std: %s \n" % (
+                            idx[0:reward_size - 1], idx[reward_size - 1], value, self.std_dev[idx]))
+            else:
+                reward = self.reward
+                reward_size = len(reward.shape)
+                with open(txt, "w") as text_file:
+                    for idx, value in np.ndenumerate(reward):
+                        text_file.write("Zustand %s : Aktion %s -> Reward %s \n" % (
+                            idx[0:reward_size - 1], idx[reward_size - 1], value))
+        else:
+            reward = single_reward
+            reward_size = len(reward.shape)
+            with open(txt, "w") as text_file:
+                for idx, value in np.ndenumerate(reward):
+                    text_file.write("Zustand %s : Aktion %s -> Reward %s \n" % (
+                        idx[0:reward_size - 1], idx[reward_size - 1], value))
 
     def improve_value_and_policy(self):
         """
@@ -150,37 +231,18 @@ class ValueIteration(LearningAlgorithm):
         """
         Calculates the next action with the highest discounted reward for the given state.
         :param state: state as tuple (state_arm1, state_arm2)
-        :return: value of the action with the highest reward and the action itself as (value of action, action as number between 0 and 3)
+        :return: value of the action with the highest reward and the action itself as
+        (value of action, action as number between 0 and 3)
         """
         max_a = None
         argmax_a = None
         for a in self.myRobot.get_possible_actions(state):
-            long_term_reward = self.reward[tuple(state.flatten()) + (a,)] + self.gamma * self.value[
+            long_term_reward = self.reward[tuple(state.flatten()) + (a,)] + self.GAMMA * self.value[
                 tuple(self.myRobot.transition(state, a).flatten())]
             if max_a is None or long_term_reward > max_a:
                 max_a = long_term_reward
                 argmax_a = a
         return max_a, argmax_a
-
-    def print_policy_table(self):
-        """
-        Prints the current policy table. (only for 2D policy table)
-        :return:
-        """
-        if self.policy.ndim == 2:
-            logging.debug("Policy:")
-            for x in range(0, self.policy.shape[0]):
-                line = ""
-                for y in range(0, self.policy.shape[1]):
-                    if self.policy[x, y] == 0:
-                        line += "v"
-                    elif self.policy[x, y] == 1:
-                        line += "^"
-                    elif self.policy[x, y] == 2:
-                        line += ">"
-                    elif self.policy[x, y] == 3:
-                        line += "<"
-                logging.debug(line)
 
     def print_value_table(self):
         """

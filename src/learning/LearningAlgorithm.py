@@ -1,5 +1,6 @@
 import pickle
 import numpy as np
+import torch
 
 
 class LearningAlgorithm:
@@ -31,7 +32,7 @@ class LearningAlgorithm:
         self.steps = 0
         self.table_sum_array = []
 
-    def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, tricks, invert_learning, ui):
+    def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
         """
         Learns the robot with Value Iteration.
         :param steps: number of iterations/steps

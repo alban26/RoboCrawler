@@ -10,7 +10,7 @@ class QLearning(LearningAlgorithm):
     QLearning
     """
 
-    gamma = 0.90
+    gamma = 0.95
     learning_rate = 1.0
 
     def __init__(self, myRobot, myWorld, ex):
@@ -30,7 +30,7 @@ class QLearning(LearningAlgorithm):
         self.state = self.myRobot.get_state()
         self.last_action_diff = np.zeros((self.myRobot.joints_per_arm_num))
 
-    def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, tricks, invert_learning, ui):
+    def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
         """
         Learns the robot with QLearning.
         :param steps: number of iterations/steps
@@ -81,7 +81,7 @@ class QLearning(LearningAlgorithm):
             """
             Holen der Belohnung
             """
-            reward = self.myWorld.step_reward() + np.sum(np.clip(self.last_action_diff * a_forward_diff, 0, 1)) * 1.0
+            reward = self.myWorld.step_reward() # + np.sum(np.clip(self.last_action_diff * a_forward_diff, 0, 1)) * 1.0
             if invert_learning:
                 reward = -reward
 
@@ -96,20 +96,20 @@ class QLearning(LearningAlgorithm):
             # self.qtable[statenr, a_forward] = self.qtable[statenr, a_forward] + self.learning_rate * (
             #    reward + self.gamma * np.max(self.qtable[successor_state, :]) - self.qtable[statenr, a_forward])
 
-            if tricks:
-                # Trick 1, arms are symmetric (only useful for multiple arms):
-                if self.myRobot.arms_num == 2:
-                    statenr_mirrored = self.myRobot.get_statenr_of_state(np.roll(self.state, 1, axis=0))
-                    a_forward_mirrored = self.myRobot.get_action_of_diff(np.roll(a_forward_diff, 1, axis=0))
-                    self.qtable[statenr_mirrored, a_forward_mirrored] = reward + self.gamma * np.max(self.qtable[successor_state_nr, :]) # reward + self.gamma * np.max(self.qtable[self.myRobot.get_statenr_of_state(self.myRobot.transition(self.state, a_forward)), :])
-
-                # Trick 2: reverse action has reward * (-1) (always useful):
-                a_reverse = self.myRobot.get_action_reverse(a_forward)
-                self.qtable[self.myRobot.get_statenr_of_state(successor_state), a_reverse] = -reward + self.gamma * np.max(self.qtable[statenr, :])
-                if self.myRobot.arms_num == 2:
-                    successor_state_mirrored = self.myRobot.get_statenr_of_state(np.roll(successor_state, 1, axis=0))
-                    a_reverse_mirrored = self.myRobot.get_action_of_diff(np.roll(self.myRobot.action_to_diff[a_reverse], 1, axis=0))
-                    self.qtable[successor_state_mirrored, a_reverse_mirrored] = -reward + self.gamma * np.max(self.qtable[statenr, :])  # Trick 1
+            # if tricks:
+            #     # Trick 1, arms are symmetric (only useful for multiple arms):
+            #     if self.myRobot.arms_num == 2:
+            #         statenr_mirrored = self.myRobot.get_statenr_of_state(np.roll(self.state, 1, axis=0))
+            #         a_forward_mirrored = self.myRobot.get_action_of_diff(np.roll(a_forward_diff, 1, axis=0))
+            #         self.qtable[statenr_mirrored, a_forward_mirrored] = reward + self.gamma * np.max(self.qtable[successor_state_nr, :]) # reward + self.gamma * np.max(self.qtable[self.myRobot.get_statenr_of_state(self.myRobot.transition(self.state, a_forward)), :])
+            #
+            #     # Trick 2: reverse action has reward * (-1) (always useful):
+            #     a_reverse = self.myRobot.get_action_reverse(a_forward)
+            #     self.qtable[self.myRobot.get_statenr_of_state(successor_state), a_reverse] = -reward + self.gamma * np.max(self.qtable[statenr, :])
+            #     if self.myRobot.arms_num == 2:
+            #         successor_state_mirrored = self.myRobot.get_statenr_of_state(np.roll(successor_state, 1, axis=0))
+            #         a_reverse_mirrored = self.myRobot.get_action_of_diff(np.roll(self.myRobot.action_to_diff[a_reverse], 1, axis=0))
+            #         self.qtable[successor_state_mirrored, a_reverse_mirrored] = -reward + self.gamma * np.max(self.qtable[statenr, :])  # Trick 1
 
             # possibility to improve tables only every few steps
             # if self.steps % improve_every_steps == 0:
@@ -122,10 +122,6 @@ class QLearning(LearningAlgorithm):
             self.steps += 1
 
             """
-            Fragen: Folgendes Vorgehen Ok?
-            - Bachelorarbeit deutsch oder englisch?
-            - Beispiel-Arbeit wie ichs mir vorstellen kann
-            - Hier ist die Observation gleich dem Zustand?
             Vorgehen: 
             - Erfahrungen sammeln (Replay Puffer auffüllen) (Zustand, Aktion, Belohnung, Folgezustand)
             - sobald Puffer gewisse Größe erreicht hat mit den 
