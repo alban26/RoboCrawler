@@ -5,8 +5,10 @@ import time
 from datetime import datetime
 from os import listdir
 from os.path import isfile, join
+import seaborn as sns
 
 import numpy as np
+from matplotlib import pyplot as plt
 from scipy import stats
 
 from learning.LearningAlgorithm import LearningAlgorithm
@@ -135,6 +137,17 @@ class ValueIteration(LearningAlgorithm):
             self.state = successor_state
         self.myWorld.draw_steps()
         self.myWorld.draw_angles()
+
+
+    def plot_rewards(self):
+        values = len(self.reward.flatten())
+        X = np.arange(values)
+
+        # plt.scatter(self.reward.flatten(), X, alpha=0.1, s=0.05)
+        # plt.plot(X, self.reward.flatten())
+        plot = sns.kdeplot(self.reward.flatten(), bw=0.2, multiple="stack")
+        plt.xlabel("Reward")
+        plt.show()
 
     def load_rewards(self):
         reward_mean = np.zeros(self.reward.shape)
