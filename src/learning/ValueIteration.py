@@ -17,6 +17,8 @@ from learning.LearningAlgorithm import LearningAlgorithm
 class ValueIteration(LearningAlgorithm):
     GAMMA = 0.98
 
+    load = False
+
     def __init__(self, myRobot, myWorld, ex):
 
         # In der Klasse Learning Algorithm sind myRobot und myWorld
@@ -27,6 +29,7 @@ class ValueIteration(LearningAlgorithm):
         # myRobot und myWorld
         super().__init__(myRobot, myWorld, ex)
         self.reward = None
+        self.execute_reward = None
         self.policy = None
         self.value = None
         self.last_action_diff = None
@@ -38,6 +41,8 @@ class ValueIteration(LearningAlgorithm):
         self.value = np.zeros(self.myRobot.joints_states_num * self.myRobot.arms_num)
         self.policy = np.zeros(self.myRobot.joints_states_num * self.myRobot.arms_num)
         self.reward = np.zeros(self.myRobot.joints_states_num * self.myRobot.arms_num + [self.myRobot.action_size()])
+        self.execute_reward = np.zeros(
+            self.myRobot.joints_states_num * self.myRobot.arms_num + [self.myRobot.action_size()])
         self.std_dev = None
         self.state = self.myRobot.get_state()
         self.last_action_diff = np.zeros(self.state.shape)
@@ -85,7 +90,7 @@ class ValueIteration(LearningAlgorithm):
         self.reward = reward_mean / k
 
         save_reward_string = datetime.now().strftime("%M_%S_%MS")
-        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-610_109-Schritt-04-150.pkl", "wb"))
+        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-610_109-Schritt-03-150.pkl", "wb"))
 
     def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
         if self.stop:
@@ -94,9 +99,11 @@ class ValueIteration(LearningAlgorithm):
             self.myWorld.step_reward()
             time.sleep(0.1)
 
-        # self.calc_reward()
-        self.reward = self.load_rewards()
-        # self.reward = self.load_rewards_without_outliers()
+        if self.load:
+            self.reward = self.load_rewards()
+            # self.reward = self.load_rewards_without_outliers()
+        else:
+            self.calc_reward()
 
         # for x in np.nditer(self.reward, op_flags=['readwrite']):
         #     if abs(x) < 0:
@@ -107,6 +114,7 @@ class ValueIteration(LearningAlgorithm):
             print(i)
             self.improve_value_and_policy()
             self.ex.update_ui_step(self.steps)
+        self.plot_rewards()
         self.save_value_as_txt()
         self.ex.update_ui_finished()
         self.print_value_table()
@@ -131,21 +139,19 @@ class ValueIteration(LearningAlgorithm):
             while self.pause and not self.stop:
                 time.sleep(0.1)
             a = self.get_greedy_action(self.state)
+            state = self.myRobot.get_state().copy()
             successor_state = self.myRobot.apply_action(self.myRobot.action_to_diff[a])
-            rew = self.myWorld.step_reward()
+            reward = self.myWorld.step_reward()
+            self.execute_reward[tuple(state.flatten()) + (a,)] = reward
             # print(rew)
             self.state = successor_state
-        self.myWorld.draw_steps()
-        self.myWorld.draw_angles()
-
+        if self.load:
+            self.myWorld.draw_steps()
+            self.myWorld.draw_angles()
+        self.save_reward_as_txt(execute=True)
 
     def plot_rewards(self):
-        values = len(self.reward.flatten())
-        X = np.arange(values)
-
-        # plt.scatter(self.reward.flatten(), X, alpha=0.1, s=0.05)
-        # plt.plot(X, self.reward.flatten())
-        plot = sns.kdeplot(self.reward.flatten(), bw=0.2, multiple="stack")
+        plot = sns.kdeplot(self.reward.flatten(), multiple="stack")
         plt.xlabel("Reward")
         plt.show()
 
@@ -198,7 +204,7 @@ class ValueIteration(LearningAlgorithm):
                 text_file.write("Zustand %s -> Value %s \n" % (
                     idx[0:value_size], value))
 
-    def save_reward_as_txt(self, single_reward=None, txt="reward_as_text.txt"):
+    def save_reward_as_txt(self, execute=False, single_reward=None, txt="reward_as_text.txt"):
         if single_reward is None:
             if self.std_dev is not None:
                 reward = self.reward
@@ -208,10 +214,16 @@ class ValueIteration(LearningAlgorithm):
                         text_file.write("Zustand %s : Aktion %s -> Reward %s | Std: %s \n" % (
                             idx[0:reward_size - 1], idx[reward_size - 1], value, self.std_dev[idx]))
             else:
-                reward = self.reward
+                if execute:
+                    reward = self.execute_reward
+                    txt = "exe_reward_as_text.txt"
+                else:
+                    reward = self.reward
                 reward_size = len(reward.shape)
                 with open(txt, "w") as text_file:
                     for idx, value in np.ndenumerate(reward):
+                        if value == 0.0:
+                            continue
                         text_file.write("Zustand %s : Aktion %s -> Reward %s \n" % (
                             idx[0:reward_size - 1], idx[reward_size - 1], value))
         else:

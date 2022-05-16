@@ -50,7 +50,7 @@ class World:
         groundBodyDef = b2BodyDef()
         groundBodyDef.position = (0, -4)
         groundBody = self.b2World.CreateBody(groundBodyDef)
-        groundBox = b2PolygonShape(box=(2000000, 4))
+        groundBox = b2PolygonShape(box=(1000000, 4))
         groundBoxFixture = b2FixtureDef(shape=groundBox, categoryBits=0x0004, maskBits=0x0002)
         groundBody.CreateFixture(groundBoxFixture)
 
@@ -114,8 +114,8 @@ class World:
 
             if counter % 100 == 0:
                 self.robot_sim.step_counter()
-                self.robot_sim.collect_steps()
-                self.robot_sim.collect_angles()
+                # self.robot_sim.collect_steps()
+                # self.robot_sim.collect_angles()
 
             counter += 1
             if self.settings.hz > 0.0:

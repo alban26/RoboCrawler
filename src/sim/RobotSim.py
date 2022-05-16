@@ -309,7 +309,7 @@ class RobotSim:
         return vertices[0] > 1.5 and vertices[1] > 1.5
 
     def touched_down(self, vertices):
-        return vertices[0] < 0.4 or vertices[1] < 0.4
+        return vertices[0] < 0.3 or vertices[1] < 0.3
 
     def step_counter(self):
         """
@@ -349,8 +349,8 @@ class RobotSim:
     def draw_steps(self):
         plt.xlabel("Axis 1")
         plt.ylabel("Axis 2")
-        plt.plot(self.arm_1_step_y_data, label='Arm 1')
-        plt.plot(self.arm_2_step_y_data, label='Arm 2')
+        plt.plot(self.arm_1_step_x_data, self.arm_1_step_y_data, label='Arm 1')
+        plt.plot(self.arm_2_step_x_data, self.arm_2_step_y_data, label='Arm 2')
         plt.legend()
 
         # plt.axis([0, 100, 0, 30])
