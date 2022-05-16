@@ -15,7 +15,7 @@ from learning.LearningAlgorithm import LearningAlgorithm
 
 
 class ValueIteration(LearningAlgorithm):
-    GAMMA = 0.995
+    GAMMA = 0.98
 
     def __init__(self, myRobot, myWorld, ex):
 
