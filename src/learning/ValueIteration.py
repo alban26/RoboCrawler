@@ -17,7 +17,7 @@ from learning.LearningAlgorithm import LearningAlgorithm
 class ValueIteration(LearningAlgorithm):
     GAMMA = 0.98
 
-    load = False
+    load = True
 
     def __init__(self, myRobot, myWorld, ex):
 
@@ -104,7 +104,7 @@ class ValueIteration(LearningAlgorithm):
             # self.reward = self.load_rewards_without_outliers()
         else:
             self.calc_reward()
-
+        self.plot_rewards()
         # for x in np.nditer(self.reward, op_flags=['readwrite']):
         #     if abs(x) < 0:
         #         x[...] = 0
@@ -114,7 +114,7 @@ class ValueIteration(LearningAlgorithm):
             print(i)
             self.improve_value_and_policy()
             self.ex.update_ui_step(self.steps)
-        self.plot_rewards()
+
         self.save_value_as_txt()
         self.ex.update_ui_finished()
         self.print_value_table()
@@ -151,7 +151,7 @@ class ValueIteration(LearningAlgorithm):
         self.save_reward_as_txt(execute=True)
 
     def plot_rewards(self):
-        plot = sns.kdeplot(self.reward.flatten(), multiple="stack")
+        plot = sns.kdeplot(self.reward.flatten(), bw=0.2, multiple="stack")
         plt.xlabel("Reward")
         plt.show()
 
