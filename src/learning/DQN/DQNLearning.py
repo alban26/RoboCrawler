@@ -18,6 +18,7 @@ from .ReplayBuffer import ReplayBuffer, Experience
 
 
 class DQNLearning(LearningAlgorithm):
+    load = False
 
     def __init__(self, myRobot, myWorld, ex):
         super().__init__(myRobot, myWorld, ex)
@@ -92,28 +93,31 @@ class DQNLearning(LearningAlgorithm):
         self.time_step = 0
 
     def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
-        # epsilon = self.EPS_START
-        # for episode in range(self.NUM_EPISODES):
-        #     state = self.myRobot.get_state()
-        #     for step in range(self.STEPS_PER_EPISODE):
-        #         action = self.select_action(state=state, epsilon=epsilon)
-        #         next_state = self.myRobot.apply_action(self.myRobot.action_to_diff[action.item()])
-        #         reward = self.myWorld.step_reward()
-        #         self.memory.append(Experience(state, action, reward, next_state))
-        #         self.time_step = (self.time_step + 1)
-        #         if self.time_step % self.TARGET_UPDATE == 0:
-        #             # If enough samples are available in memory, get random subset and learn
-        #             if len(self.memory) > self.BATCH_SIZE:
-        #                 experiences = self.memory.sample(self.BATCH_SIZE)
-        #                 self.train(experiences)
-        #
-        #     epsilon = max(self.EPS_END, self.EPS_DECAY * epsilon)
-        #     self.ex.update_ui_step(episode, epsilon)
-        #
-        # save_network_string = datetime.now().strftime("%M_%S_%MS")
-        # pickle.dump(self.policy_network,
-        #             open(f"../neural_networks/{save_network_string}-610_109-Schritt-04-150.pkl", "wb"))
-        self.policy_network = self.load_neural_network()
+        if self.load:
+            self.policy_network = self.load_neural_network()
+        else:
+            epsilon = self.EPS_START
+            for episode in range(self.NUM_EPISODES):
+                state = self.myRobot.get_state()
+                for step in range(self.STEPS_PER_EPISODE):
+                    action = self.select_action(state=state, epsilon=epsilon)
+                    next_state = self.myRobot.apply_action(self.myRobot.action_to_diff[action.item()])
+                    reward = self.myWorld.step_reward()
+                    self.memory.append(Experience(state, action, reward, next_state))
+                    self.time_step = (self.time_step + 1)
+                    if self.time_step % self.TARGET_UPDATE == 0:
+                        # If enough samples are available in memory, get random subset and learn
+                        if len(self.memory) > self.BATCH_SIZE:
+                            experiences = self.memory.sample(self.BATCH_SIZE)
+                            self.train(experiences)
+
+                epsilon = max(self.EPS_END, self.EPS_DECAY * epsilon)
+                self.ex.update_ui_step(episode, epsilon)
+
+            save_network_string = datetime.now().strftime("%M_%S_%MS")
+            pickle.dump(self.policy_network,
+                        open(f"../neural_networks/{save_network_string}-610_109-Schritt-04-150.pkl", "wb"))
+
         self.ex.update_ui_finished()
         return True
 
@@ -158,9 +162,7 @@ class DQNLearning(LearningAlgorithm):
         # Get expected Q values from local model
         Q_expected = self.policy_network(states).gather(1, actions)
 
-        # Compute loss
         loss = F.mse_loss(Q_expected, Q_targets)
-        # Minimize the loss
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
