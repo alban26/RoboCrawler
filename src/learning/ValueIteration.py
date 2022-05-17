@@ -90,7 +90,7 @@ class ValueIteration(LearningAlgorithm):
         self.reward = reward_mean / k
 
         save_reward_string = datetime.now().strftime("%M_%S_%MS")
-        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-610_109-Schritt-03-150.pkl", "wb"))
+        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-480-03-150.pkl", "wb"))
 
     def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
         if self.stop:
