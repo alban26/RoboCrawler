@@ -55,10 +55,10 @@ class RobotSim:
     def init(self, robot_model, joints_mass, joints_size, joints_friction):
         self.robot_model = robot_model
 
-        pos = (0, 8)
+        pos = (0, 0.8)
 
-        body_mass = 1.0
-        self.body_size = (22.0, 8)
+        body_mass = 1
+        self.body_size = (2.2, 0.8)
         body_friction = 1.0
 
         self.down_up_1 = False
@@ -74,10 +74,10 @@ class RobotSim:
         self.arm2_j1_angles = []
         self.arm2_j2_angles = []
 
-        wheel_mass = 1.0
-        self.wheel_radius = 2.5
+        wheel_mass = 1
+        self.wheel_radius = 0.25
         wheel_friction = 0.1
-        body_wheel_joint_margin_body = (5, 0)
+        body_wheel_joint_margin_body = (0.5, 0)
 
         self.joints_mass = joints_mass
         self.joints_size = joints_size
@@ -85,7 +85,7 @@ class RobotSim:
         self.max_degree_error = 0.01  # in radians #0.05
 
         # Margin to the upper right corner of the body
-        body_arm1_joint_margin_body = (0.5, 0.5)
+        body_arm1_joint_margin_body = (0.05, 0.05)
 
         # Robot body
         body_body_def = b2BodyDef()
@@ -306,10 +306,10 @@ class RobotSim:
         return steps_done
 
     def lifted_off(self, vertices):
-        return vertices[0] > 1.5 and vertices[1] > 1.5
+        return vertices[0] > 0.15 and vertices[1] > 0.15
 
     def touched_down(self, vertices):
-        return vertices[0] < 0.4 or vertices[1] < 0.4
+        return vertices[0] < 0.03 or vertices[1] < 0.03
 
     def step_counter(self):
         """

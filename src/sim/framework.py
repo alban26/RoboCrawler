@@ -136,7 +136,7 @@ class Framework:
         # self.b2World.subStepping = True
 
         # Initial all
-        self.robot_sim = RobotSim.RobotSim(self.robot, [0.2, 0.2], [(12.0, 1.0), (8.0, 1.0)], [1.0, 1.0], self.b2World)
+        self.robot_sim = RobotSim.RobotSim(self.robot, [0.2, 0.2], [(1.2, 0.1), (0.8, 0.1)], [1, 1], self.b2World)
         self.world = World.World(self.renderer, self.settings, self.robot, self.robot_sim, self.b2World, self.ex)
         self.learning_algorithm = ValueIteration.ValueIteration(self.world.robot, self.world, self.ex)
         self.set_pause(False)
@@ -195,7 +195,7 @@ class Framework:
         self.settings = settings.Settings()
         self.screenSize = b2Vec2(0, 0)
         self.setCenter((0, 10.0 * 20.0))
-        self.setZoom(4.0)
+        self.setZoom(40.0)
 
     def setCenter(self, value):
         """

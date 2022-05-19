@@ -7,13 +7,15 @@ from os import listdir
 from os.path import isfile, join
 
 import numpy as np
+import seaborn as sns
+from matplotlib import pyplot as plt
 from scipy import stats
 
 from learning.LearningAlgorithm import LearningAlgorithm
 
 
 class ValueIteration(LearningAlgorithm):
-    GAMMA = 0.995
+    GAMMA = 0.99
 
     def __init__(self, myRobot, myWorld, ex):
 
@@ -50,40 +52,31 @@ class ValueIteration(LearningAlgorithm):
 
     def calc_reward(self):
         all_possible_state_action_pairs = self.get_all_possible_state_action().copy()
-        reward_tables = []
-        k = 1
-        for _ in range(k):
-            n = 0
-            N = len(all_possible_state_action_pairs)
-            for state_action in all_possible_state_action_pairs:
-                self.myRobot.state = state_action[0].copy()
-                self.state = state_action[0].copy()
-                self.myWorld.reset_sim()
-                action_diff = self.myRobot.action_to_diff[state_action[1]]
 
-                next_state = self.myRobot.apply_action(action_diff)
+        n = 0
+        N = len(all_possible_state_action_pairs)
+        for state_action in all_possible_state_action_pairs:
+            self.myRobot.state = state_action[0].copy()
+            self.state = state_action[0].copy()
+            self.myWorld.reset_sim()
+            action_diff = self.myRobot.action_to_diff[state_action[1]]
 
-                action_diff = np.array(action_diff)
-                reward = self.myWorld.step_reward()
+            next_state = self.myRobot.apply_action(action_diff)
 
-                self.reward[tuple(state_action[0].flatten()) + (state_action[1],)] = reward
+            action_diff = np.array(action_diff)
+            reward = self.myWorld.step_reward()
 
-                self.last_action_diff = action_diff
-                n += 1
-                if n % 1000 == 0:
-                    print('\rIteration {}/{}'.format(n, N), end="")
+            self.reward[tuple(state_action[0].flatten()) + (state_action[1],)] = reward
 
-            reward_tables.append(self.reward)
-            print(reward_tables)
+            self.last_action_diff = action_diff
+            n += 1
+            if n % 1000 == 0:
+                print('\rIteration {}/{}'.format(n, N), end="")
 
-        # Mittelt die Reward Tabellen
-        reward_mean = np.zeros(self.reward.shape)
-        for rt in reward_tables:
-            reward_mean += rt
-        self.reward = reward_mean / k
+
 
         save_reward_string = datetime.now().strftime("%M_%S_%MS")
-        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-610_109-Schritt-04-150.pkl", "wb"))
+        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-610-Mit_021_klein-hz135.pkl", "wb"))
 
     def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
         if self.stop:
@@ -96,6 +89,8 @@ class ValueIteration(LearningAlgorithm):
         self.reward = self.load_rewards()
         # self.reward = self.load_rewards_without_outliers()
 
+        # self.plot_rewards()
+
         # for x in np.nditer(self.reward, op_flags=['readwrite']):
         #     if abs(x) < 0:
         #         x[...] = 0
@@ -105,10 +100,21 @@ class ValueIteration(LearningAlgorithm):
             print(i)
             self.improve_value_and_policy()
             self.ex.update_ui_step(self.steps)
+
         self.save_value_as_txt()
         self.ex.update_ui_finished()
         self.print_value_table()
         return True
+
+    def plot_rewards(self):
+        values = len(self.reward.flatten())
+        X = np.arange(values)
+
+        # plt.scatter(self.reward.flatten(), X, alpha=0.1, s=0.05)
+        # plt.plot(X, self.reward.flatten())
+        plot = sns.kdeplot(self.reward.flatten(), multiple="stack")
+        plt.xlabel("Reward")
+        plt.show()
 
     def get_policy(self):
         return self.value, self.reward

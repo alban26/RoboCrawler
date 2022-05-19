@@ -48,9 +48,9 @@ class World:
         :return:
         """
         groundBodyDef = b2BodyDef()
-        groundBodyDef.position = (0, -4)
+        groundBodyDef.position = (0, -0.4)
         groundBody = self.b2World.CreateBody(groundBodyDef)
-        groundBox = b2PolygonShape(box=(2000000, 4))
+        groundBox = b2PolygonShape(box=(1000000, 0.4))
         groundBoxFixture = b2FixtureDef(shape=groundBox, categoryBits=0x0004, maskBits=0x0002)
         groundBody.CreateFixture(groundBoxFixture)
 
@@ -138,7 +138,7 @@ class World:
 
         # print("Steps " + str(steps) + " in " + str(round(end-start, 4)) + " Sekunden")
 
-        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0]) - (self.get_steps_done() * 1.09)
+        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0]) - (self.get_steps_done() * 0.21)
 
         # self.print_vel()
 
