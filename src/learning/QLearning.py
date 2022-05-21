@@ -114,20 +114,10 @@ class QLearning(LearningAlgorithm):
             # possibility to improve tables only every few steps
             # if self.steps % improve_every_steps == 0:
             #     self.improve_value_and_policy()
-            """
-            Setzen des neuen Zustandes
-            """
+
             self.state = successor_state
             self.last_action_diff = a_forward_diff
             self.steps += 1
-
-            """
-            Vorgehen: 
-            - Erfahrungen sammeln (Replay Puffer auffüllen) (Zustand, Aktion, Belohnung, Folgezustand)
-            - sobald Puffer gewisse Größe erreicht hat mit den 
-              gesammelten Erfahrungen Netz Trainieren (2 Netze, 1 online-Netz und 1 Target-Netz)
-            - ...
-            """
 
             self.ex.update_ui_step(self.steps, self.epsilon)
 

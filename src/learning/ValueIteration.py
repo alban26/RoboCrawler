@@ -5,9 +5,9 @@ import time
 from datetime import datetime
 from os import listdir
 from os.path import isfile, join
+import seaborn as sns
 
 import numpy as np
-import seaborn as sns
 from matplotlib import pyplot as plt
 from scipy import stats
 
@@ -15,7 +15,9 @@ from learning.LearningAlgorithm import LearningAlgorithm
 
 
 class ValueIteration(LearningAlgorithm):
-    GAMMA = 0.99
+    GAMMA = 0.98
+
+    load = False
 
     def __init__(self, myRobot, myWorld, ex):
 
@@ -27,6 +29,7 @@ class ValueIteration(LearningAlgorithm):
         # myRobot und myWorld
         super().__init__(myRobot, myWorld, ex)
         self.reward = None
+        self.execute_reward = None
         self.policy = None
         self.value = None
         self.last_action_diff = None
@@ -38,6 +41,8 @@ class ValueIteration(LearningAlgorithm):
         self.value = np.zeros(self.myRobot.joints_states_num * self.myRobot.arms_num)
         self.policy = np.zeros(self.myRobot.joints_states_num * self.myRobot.arms_num)
         self.reward = np.zeros(self.myRobot.joints_states_num * self.myRobot.arms_num + [self.myRobot.action_size()])
+        self.execute_reward = np.zeros(
+            self.myRobot.joints_states_num * self.myRobot.arms_num + [self.myRobot.action_size()])
         self.std_dev = None
         self.state = self.myRobot.get_state()
         self.last_action_diff = np.zeros(self.state.shape)
@@ -52,31 +57,40 @@ class ValueIteration(LearningAlgorithm):
 
     def calc_reward(self):
         all_possible_state_action_pairs = self.get_all_possible_state_action().copy()
+        reward_tables = []
+        k = 1
+        for _ in range(k):
+            n = 0
+            N = len(all_possible_state_action_pairs)
+            for state_action in all_possible_state_action_pairs:
+                self.myRobot.state = state_action[0].copy()
+                self.state = state_action[0].copy()
+                self.myWorld.reset_sim()
+                action_diff = self.myRobot.action_to_diff[state_action[1]]
 
-        n = 0
-        N = len(all_possible_state_action_pairs)
-        for state_action in all_possible_state_action_pairs:
-            self.myRobot.state = state_action[0].copy()
-            self.state = state_action[0].copy()
-            self.myWorld.reset_sim()
-            action_diff = self.myRobot.action_to_diff[state_action[1]]
+                next_state = self.myRobot.apply_action(action_diff)
 
-            next_state = self.myRobot.apply_action(action_diff)
+                action_diff = np.array(action_diff)
+                reward = self.myWorld.step_reward()
 
-            action_diff = np.array(action_diff)
-            reward = self.myWorld.step_reward()
+                self.reward[tuple(state_action[0].flatten()) + (state_action[1],)] = reward
 
-            self.reward[tuple(state_action[0].flatten()) + (state_action[1],)] = reward
+                self.last_action_diff = action_diff
+                n += 1
+                if n % 1000 == 0:
+                    print('\rIteration {}/{}'.format(n, N), end="")
 
-            self.last_action_diff = action_diff
-            n += 1
-            if n % 1000 == 0:
-                print('\rIteration {}/{}'.format(n, N), end="")
+            reward_tables.append(self.reward)
+            print(reward_tables)
 
-
+        # Mittelt die Reward Tabellen
+        reward_mean = np.zeros(self.reward.shape)
+        for rt in reward_tables:
+            reward_mean += rt
+        self.reward = reward_mean / k
 
         save_reward_string = datetime.now().strftime("%M_%S_%MS")
-        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-610-Mit_021_klein-hz135.pkl", "wb"))
+        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-480-03-150.pkl", "wb"))
 
     def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
         if self.stop:
@@ -85,12 +99,12 @@ class ValueIteration(LearningAlgorithm):
             self.myWorld.step_reward()
             time.sleep(0.1)
 
-        # self.calc_reward()
-        self.reward = self.load_rewards()
-        # self.reward = self.load_rewards_without_outliers()
-
-        # self.plot_rewards()
-
+        if self.load:
+            self.reward = self.load_rewards()
+            # self.reward = self.load_rewards_without_outliers()
+        else:
+            self.calc_reward()
+        self.plot_rewards()
         # for x in np.nditer(self.reward, op_flags=['readwrite']):
         #     if abs(x) < 0:
         #         x[...] = 0
@@ -105,16 +119,6 @@ class ValueIteration(LearningAlgorithm):
         self.ex.update_ui_finished()
         self.print_value_table()
         return True
-
-    def plot_rewards(self):
-        values = len(self.reward.flatten())
-        X = np.arange(values)
-
-        # plt.scatter(self.reward.flatten(), X, alpha=0.1, s=0.05)
-        # plt.plot(X, self.reward.flatten())
-        plot = sns.kdeplot(self.reward.flatten(), multiple="stack")
-        plt.xlabel("Reward")
-        plt.show()
 
     def get_policy(self):
         return self.value, self.reward
@@ -135,12 +139,21 @@ class ValueIteration(LearningAlgorithm):
             while self.pause and not self.stop:
                 time.sleep(0.1)
             a = self.get_greedy_action(self.state)
+            state = self.myRobot.get_state().copy()
             successor_state = self.myRobot.apply_action(self.myRobot.action_to_diff[a])
-            rew = self.myWorld.step_reward()
+            reward = self.myWorld.step_reward()
+            self.execute_reward[tuple(state.flatten()) + (a,)] = reward
             # print(rew)
             self.state = successor_state
-        self.myWorld.draw_steps()
-        self.myWorld.draw_angles()
+        if self.load:
+            self.myWorld.draw_steps()
+            self.myWorld.draw_angles()
+        self.save_reward_as_txt(execute=True)
+
+    def plot_rewards(self):
+        plot = sns.kdeplot(self.reward.flatten(), bw=0.2, multiple="stack")
+        plt.xlabel("Reward")
+        plt.show()
 
     def load_rewards(self):
         reward_mean = np.zeros(self.reward.shape)
@@ -191,7 +204,7 @@ class ValueIteration(LearningAlgorithm):
                 text_file.write("Zustand %s -> Value %s \n" % (
                     idx[0:value_size], value))
 
-    def save_reward_as_txt(self, single_reward=None, txt="reward_as_text.txt"):
+    def save_reward_as_txt(self, execute=False, single_reward=None, txt="reward_as_text.txt"):
         if single_reward is None:
             if self.std_dev is not None:
                 reward = self.reward
@@ -201,10 +214,16 @@ class ValueIteration(LearningAlgorithm):
                         text_file.write("Zustand %s : Aktion %s -> Reward %s | Std: %s \n" % (
                             idx[0:reward_size - 1], idx[reward_size - 1], value, self.std_dev[idx]))
             else:
-                reward = self.reward
+                if execute:
+                    reward = self.execute_reward
+                    txt = "exe_reward_as_text.txt"
+                else:
+                    reward = self.reward
                 reward_size = len(reward.shape)
                 with open(txt, "w") as text_file:
                     for idx, value in np.ndenumerate(reward):
+                        if value == 0.0:
+                            continue
                         text_file.write("Zustand %s : Aktion %s -> Reward %s \n" % (
                             idx[0:reward_size - 1], idx[reward_size - 1], value))
         else:

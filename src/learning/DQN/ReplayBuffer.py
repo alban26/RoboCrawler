@@ -1,8 +1,6 @@
 from collections import namedtuple, deque
-import random
 
 import numpy as np
-
 """"
 Datenstruktur für die Erfahrungen
 """
@@ -23,8 +21,8 @@ class ReplayBuffer:
     def sample(self, batch_size):
         indices = np.random.choice(len(self.buffer), batch_size,
                                    replace=False)
-        states, actions, next_states, rewards = \
+        states, actions, rewards, next_state = \
             zip(*[self.buffer[idx] for idx in indices])
-        return np.array(states), np.array(actions), \
-               np.array(next_states), np.array(rewards, dtype=np.float32)
+        return np.array(states, dtype=np.float32), np.array(actions), \
+               np.array(rewards, dtype=np.float32), np.array(next_state, dtype=np.float32),
 
