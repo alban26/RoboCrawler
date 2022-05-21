@@ -18,7 +18,7 @@ from .ReplayBuffer import ReplayBuffer, Experience
 
 
 class DQNLearning(LearningAlgorithm):
-    load = True
+    load = False
 
     def __init__(self, myRobot, myWorld, ex):
         super().__init__(myRobot, myWorld, ex)
@@ -59,18 +59,18 @@ class DQNLearning(LearningAlgorithm):
 
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.BATCH_SIZE = 256
-        self.GAMMA = 0.999
+        self.GAMMA = 0.9
         self.TAU = 0.1
         # Epsilon Greedy Parameter
-        self.EPS_START = 1
+        self.EPS_START = 1.0
         self.EPS_END = 0.01
-        self.EPS_DECAY = 0.995
+        self.EPS_DECAY = 0.9995
 
         # Wie oft soll das target Network aktualisiert werden
         self.TARGET_UPDATE = 10
 
-        self.MEMORY_SIZE = 50000
+        self.BATCH_SIZE = 512
+        self.MEMORY_SIZE = 16000
         self.LR = 0.001
         self.NUM_EPISODES = 16000
         self.STEPS_PER_EPISODE = 50
@@ -81,7 +81,7 @@ class DQNLearning(LearningAlgorithm):
         self.policy_network = DQN(input_size, output_size).to(device=self.device)
         self.target_network = DQN(input_size, output_size).to(device=self.device)
 
-        self.target_network.eval()
+        # self.target_network.eval()
 
         self.state = self.myRobot.get_state()
         self.last_action_diff = np.zeros(self.myRobot.joints_per_arm_num)
@@ -148,7 +148,7 @@ class DQNLearning(LearningAlgorithm):
             self.policy_network.train()  # Sets the module in training mode.
             return action_values.detach().argmax()
         else:
-            #return np.random.choice(self.myRobot.get_possible_actions(state))
+            # return np.random.choice(self.myRobot.get_possible_actions(state))
             return np.random.choice(np.arange(self.myRobot.action_size()))
 
     def train(self, experiences):
@@ -188,8 +188,9 @@ class DQNLearning(LearningAlgorithm):
             target_model (PyTorch model): weights will be copied to
             tau (float): interpolation parameter
         """
-        for target_param, local_param in zip(self.target_network.parameters(), self.policy_network.parameters()):
-            target_param.data.copy_(self.TAU * local_param.data + (1.0 - self.TAU) * target_param.data)
+        for target_param, policy_param in zip(self.target_network.parameters(), self.policy_network.parameters()):
+            target_param.data.copy_(policy_param.data)
+            #target_param.data.copy_(self.TAU * local_param.data + (1.0 - self.TAU) * target_param.data)
 
     def get_policy(self):
         pass

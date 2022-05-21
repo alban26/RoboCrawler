@@ -1,3 +1,4 @@
+import random
 from collections import namedtuple, deque
 
 import numpy as np
@@ -5,7 +6,7 @@ import numpy as np
 Datenstruktur für die Erfahrungen
 """
 Experience = namedtuple(
-    'Experience', field_names=['state', 'action', 'next_state', 'reward'])
+    'Experience', field_names=['state', 'action', 'reward', 'next_state'])
 
 
 class ReplayBuffer:
