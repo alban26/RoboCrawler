@@ -17,7 +17,7 @@ from learning.LearningAlgorithm import LearningAlgorithm
 class ValueIteration(LearningAlgorithm):
     GAMMA = 0.98
 
-    load = True
+    load = False
 
     def __init__(self, myRobot, myWorld, ex):
 

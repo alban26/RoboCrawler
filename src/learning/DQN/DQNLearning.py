@@ -18,7 +18,7 @@ from .ReplayBuffer import ReplayBuffer, Experience
 
 
 class DQNLearning(LearningAlgorithm):
-    load = False
+    load = True
 
     def __init__(self, myRobot, myWorld, ex):
         super().__init__(myRobot, myWorld, ex)
@@ -70,7 +70,7 @@ class DQNLearning(LearningAlgorithm):
         # Wie oft soll das target Network aktualisiert werden
         self.TARGET_UPDATE = 10
 
-        self.MEMORY_SIZE = 100000
+        self.MEMORY_SIZE = 50000
         self.LR = 0.001
         self.NUM_EPISODES = 16000
         self.STEPS_PER_EPISODE = 50
@@ -104,6 +104,7 @@ class DQNLearning(LearningAlgorithm):
                     next_state = self.myRobot.apply_action(self.myRobot.action_to_diff[action.item()])
                     reward = self.myWorld.step_reward()
                     self.memory.append(Experience(state, action, reward, next_state))
+                    state = next_state
                     self.time_step = (self.time_step + 1)
                     if self.time_step % self.TARGET_UPDATE == 0:
                         # If enough samples are available in memory, get random subset and learn
@@ -147,7 +148,8 @@ class DQNLearning(LearningAlgorithm):
             self.policy_network.train()  # Sets the module in training mode.
             return action_values.detach().argmax()
         else:
-            return np.random.choice(self.myRobot.get_possible_actions(state))
+            #return np.random.choice(self.myRobot.get_possible_actions(state))
+            return np.random.choice(np.arange(self.myRobot.action_size()))
 
     def train(self, experiences):
         """Update value parameters using given batch of experience tuples.
@@ -204,7 +206,7 @@ class DQNLearning(LearningAlgorithm):
                 time.sleep(0.1)
             a = self.select_action(self.state, epsilon=0.0)
             successor_state = self.myRobot.apply_action(self.myRobot.action_to_diff[a.item()])
-            rew = self.myWorld.step_reward()
+            self.myWorld.step_reward()
             # print(rew)
             self.state = successor_state
         # self.myWorld.draw_steps()
