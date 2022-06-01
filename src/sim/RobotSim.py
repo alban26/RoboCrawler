@@ -409,7 +409,6 @@ class RobotSim:
 
             return in_final_state
 
-
     def reset_velocity(self):
         """
         Sets the velocity and the angular_velocity of all objects to zero.

@@ -93,8 +93,8 @@ class World:
 
         self.robot_sim.reset_velocity()
 
-    def set_vel(self):
-        self.robot_sim.set_vel()
+    def x_pos(self):
+        return self.robot_sim.get_body_pos()[0]
 
     def step_reward(self):
         """
@@ -111,12 +111,10 @@ class World:
             if isinstance(self.robot, RobotDiscrete):
                 if self.robot_sim.update():
                     break
-
             if counter % 100 == 0:
                 self.robot_sim.step_counter()
-                self.robot_sim.collect_steps()
-                self.robot_sim.collect_angles()
-
+                # self.robot_sim.collect_steps()
+                # self.robot_sim.collect_angles()
             counter += 1
             if self.settings.hz > 0.0:
                 time_step = 1.0 / self.settings.hz
@@ -135,11 +133,9 @@ class World:
         # Without resetting velocity the reward of the next state is influenced by the current state.
         # With the resetting, it's a Markovian decisionproces.
         self.robot_sim.reset_velocity()
-
         # print("Steps " + str(steps) + " in " + str(round(end-start, 4)) + " Sekunden")
 
-        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0])# - (self.get_steps_done() * 0.21)
-
+        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0])  # - (self.get_steps_done() * 0.21)
         # self.print_vel()
 
         # if isinstance(self.robot, RobotDiscrete):
@@ -159,6 +155,9 @@ class World:
 
     def draw_angles(self):
         self.robot_sim.draw_angles()
+
+    def reset_robot_sim(self):
+        self.robot_sim.reset()
 
     def reset(self):
         """

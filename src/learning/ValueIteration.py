@@ -21,12 +21,6 @@ class ValueIteration(LearningAlgorithm):
 
     def __init__(self, myRobot, myWorld, ex):
 
-        # In der Klasse Learning Algorithm sind myRobot und myWorld
-        # als Klassenvariablen hinterlegt.
-        # Per super() wird bei der Instanziierung der Klasse
-        # ValueIteration ebenfalls LearningAlgorithm instanziiert
-        # und somit enstehen dann auch die Instanzvariablen
-        # myRobot und myWorld
         super().__init__(myRobot, myWorld, ex)
         self.reward = None
         self.execute_reward = None
@@ -47,16 +41,9 @@ class ValueIteration(LearningAlgorithm):
         self.state = self.myRobot.get_state()
         self.last_action_diff = np.zeros(self.state.shape)
 
-    def get_all_possible_state_action(self):
-        state_action_pairs = []
-        for state in self.myRobot.get_all_states():
-            for action in self.myRobot.get_possible_actions(state):
-                state_action_pairs.append((state, action))
-        random.shuffle(state_action_pairs)
-        return state_action_pairs
 
     def calc_reward(self):
-        all_possible_state_action_pairs = self.get_all_possible_state_action().copy()
+        all_possible_state_action_pairs = self.myRobot.get_all_possible_state_action().copy()
         reward_tables = []
         k = 1
         for _ in range(k):
@@ -104,7 +91,7 @@ class ValueIteration(LearningAlgorithm):
             # self.reward = self.load_rewards_without_outliers()
         else:
             self.calc_reward()
-        self.plot_rewards()
+        # self.plot_rewards()
         # for x in np.nditer(self.reward, op_flags=['readwrite']):
         #     if abs(x) < 0:
         #         x[...] = 0
@@ -150,10 +137,10 @@ class ValueIteration(LearningAlgorithm):
             self.myWorld.draw_angles()
         self.save_reward_as_txt(execute=True)
 
-    def plot_rewards(self):
-        plot = sns.kdeplot(self.reward.flatten(), bw=0.2, multiple="stack")
-        plt.xlabel("Reward")
-        plt.show()
+    # def plot_rewards(self):
+    #     plot = sns.kdeplot(self.reward.flatten(), bw=0.2, multiple="stack")
+    #     plt.xlabel("Reward")
+    #     plt.show()
 
     def load_rewards(self):
         reward_mean = np.zeros(self.reward.shape)

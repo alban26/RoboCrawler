@@ -10,7 +10,7 @@ class Settings(object):
     """
 
     # Physics options
-    hz = 135.0
+    hz = 90.0
     velocityIterations = 8
     positionIterations = 3
     # Makes physics results more accurate (see Box2D wiki)

@@ -101,6 +101,16 @@ class Ex(QMainWindow):
             self.draw_value_sum()
         self.ui.label_steps.setText("Step: " + str(steps) + "       Epsilon: " + str(round(epsilon, 4)))
 
+    def update_ui_step_dqn(self, steps, epsilon=1):
+        """
+        Update step label in GUI in DQN implementation
+        :param steps: amount of learning iterations
+        :param epsilon: exploration factor
+        :return:
+        """
+        self.draw_mean_reward()
+        self.ui.label_steps.setText("Step: " + str(steps) + "       Epsilon: " + str(round(epsilon, 4)))
+
     def update_ui_finished(self):
         """
         UI update as soon as the robot finished learning
@@ -115,12 +125,21 @@ class Ex(QMainWindow):
         Draw Value Graph
         :return:
         """
-        plt.plot(self.fw.learning_algorithm.sum_table());
+        plt.plot(self.fw.learning_algorithm.sum_table())
         plt.xlabel("Steps")
         plt.ylabel("Value table sum")
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         plt.clf()
+
+    def draw_mean_reward(self):
+        plt.plot(self.fw.learning_algorithm.mean_reward())
+        plt.xlabel("Episodes")
+        plt.ylabel("Average reward")
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        plt.clf()
+
 
     def updateRobotAttributesFromGUI(self):
         """

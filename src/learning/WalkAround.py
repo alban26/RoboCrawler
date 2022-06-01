@@ -94,7 +94,7 @@ class WalkAround(LearningAlgorithm):
         degrees_delta = np.subtract(degrees, degrees_after)
         print("Winkel geändert um: " + str(degrees_delta))
         reward = self.myWorld.step_reward()
-        self.myWorld.draw_steps()
+        # self.myWorld.draw_steps()
         print("reward for done action:", reward)
 
     def change_state(self, new_state):
@@ -128,8 +128,8 @@ class WalkAround(LearningAlgorithm):
         start_state = self.myRobot.joints_states_num
         self.myRobot.state = np.array(
             [[int(start_state[0] / 2), int(start_state[1] / 2)], [int(start_state[0] / 2), int(start_state[1] / 2)]])
-        self.myWorld.step_reward()
-        self.myWorld.draw_steps()
+        # self.myWorld.step_reward()
+        # self.myWorld.draw_steps()
 
     def walk_reverse(self, steps):
         steps = int(steps / 2)
@@ -159,7 +159,7 @@ class WalkAround(LearningAlgorithm):
         self.myRobot.state = np.array(
             [[int(start_state[0] / 2), int(start_state[1] / 2)], [int(start_state[0] / 2), int(start_state[1] / 2)]])
         self.myWorld.step_reward()
-        self.myWorld.draw_steps()
+        # self.myWorld.draw_steps()
 
     def get_all_possible_state_action(self):
         state_action_pairs = []
@@ -172,7 +172,7 @@ class WalkAround(LearningAlgorithm):
     def compare_transitions(self):
         state_action_nextstate_1 = []
         state_action_nextstate_2 = []
-        all_possible_state_action_pairs = self.get_all_possible_state_action()
+        all_possible_state_action_pairs = self.myRobot.get_all_possible_state_action()
         for i in range(2):
             n = 0
             N = len(all_possible_state_action_pairs)

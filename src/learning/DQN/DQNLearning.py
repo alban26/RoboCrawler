@@ -18,7 +18,7 @@ from .ReplayBuffer import ReplayBuffer, Experience
 
 
 class DQNLearning(LearningAlgorithm):
-    load = False
+    load = True
 
     def __init__(self, myRobot, myWorld, ex):
         super().__init__(myRobot, myWorld, ex)
@@ -42,6 +42,7 @@ class DQNLearning(LearningAlgorithm):
         self.TAU = None
         self.optimizer = None
         self.time_step = None
+        self.dist = None
         logging.debug("DQN-Learning init: ".format())
 
     def reset(self):
@@ -64,14 +65,14 @@ class DQNLearning(LearningAlgorithm):
         # Epsilon Greedy Parameter
         self.EPS_START = 1.0
         self.EPS_END = 0.01
-        self.EPS_DECAY = 0.9995
+        self.EPS_DECAY = 0.9999
 
         # Wie oft soll das target Network aktualisiert werden
         self.TARGET_UPDATE = 10
 
-        self.BATCH_SIZE = 512
+        self.BATCH_SIZE = 1024
         self.MEMORY_SIZE = 16000
-        self.LR = 0.001
+        self.LR = 0.0001
         self.NUM_EPISODES = 16000
         self.STEPS_PER_EPISODE = 50
 
@@ -81,7 +82,7 @@ class DQNLearning(LearningAlgorithm):
         self.policy_network = DQN(input_size, output_size).to(device=self.device)
         self.target_network = DQN(input_size, output_size).to(device=self.device)
 
-        # self.target_network.eval()
+        self.target_network.eval()
 
         self.state = self.myRobot.get_state()
         self.last_action_diff = np.zeros(self.myRobot.joints_per_arm_num)
@@ -93,32 +94,48 @@ class DQNLearning(LearningAlgorithm):
         self.time_step = 0
 
     def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
+        states = []
+        for i in self.myRobot.get_all_states():
+            states.append(i)
         if self.load:
             self.policy_network = self.load_neural_network()
         else:
             epsilon = self.EPS_START
             for episode in range(self.NUM_EPISODES):
-                state = self.myRobot.get_state()
+                rnd = np.random.choice(np.arange(len(states)))
+                self.myRobot.state = states[rnd]
+                self.myWorld.reset_sim()
+                state = self.myRobot.state
+                sum_reward = 0
+                x_position_start = self.myWorld.x_pos()
                 for step in range(self.STEPS_PER_EPISODE):
                     action = self.select_action(state=state, epsilon=epsilon)
                     next_state = self.myRobot.apply_action(self.myRobot.action_to_diff[action.item()])
                     reward = self.myWorld.step_reward()
+                    sum_reward += reward
                     self.memory.append(Experience(state, action, reward, next_state))
                     state = next_state
                     self.time_step = (self.time_step + 1)
                     if self.time_step % self.TARGET_UPDATE == 0:
-                        # If enough samples are available in memory, get random subset and learn
                         if len(self.memory) > self.BATCH_SIZE:
                             experiences = self.memory.sample(self.BATCH_SIZE)
                             self.train(experiences)
 
+                # self.dist = self.myWorld.x_pos() - x_position_start
+                self.dist = sum_reward / self.STEPS_PER_EPISODE
                 epsilon = max(self.EPS_END, self.EPS_DECAY * epsilon)
-                self.ex.update_ui_step(episode, epsilon)
+                self.ex.update_ui_step_dqn(episode, epsilon)
+
+                # Alle 1000 Episoden das Netz abspeichern
+                if episode % 1000 == 0:
+                    self.myWorld.reset_robot_sim()
+                    save_network_string = datetime.now().strftime("%M_%S_%MS")
+                    pickle.dump(self.policy_network,
+                                open(f"../neural_networks/{save_network_string}-350_109-Schritt-04-150.pkl", "wb"))
 
             save_network_string = datetime.now().strftime("%M_%S_%MS")
             pickle.dump(self.policy_network,
-                        open(f"../neural_networks/{save_network_string}-610_109-Schritt-04-150.pkl", "wb"))
-
+                        open(f"../neural_networks/{save_network_string}-350_109-Schritt-04-150.pkl", "wb"))
         self.ex.update_ui_finished()
         return True
 
@@ -132,20 +149,19 @@ class DQNLearning(LearningAlgorithm):
 
     def select_action(self, state, epsilon=0.):
         """Returns actions for given state as per current policy.
-
         Params
         ======
             state (array_like): current state
-            eps (float): epsilon, for epsilon-greedy action selection
+            epsilon (float): epsilon, for epsilon-greedy action selection
         """
         # Epsilon-greedy action selection
         if np.random.rand() > epsilon:
             # state = torch.tensor(state, device=self.device)
             state = torch.tensor(state.reshape(1, 4), dtype=torch.float32)
-            self.policy_network.eval()  # Sets the module in evaluation mode.
+            self.policy_network.eval()  # evaluation mode.
             with torch.no_grad():
                 action_values = self.policy_network(state)
-            self.policy_network.train()  # Sets the module in training mode.
+            self.policy_network.train()  # training mode.
             return action_values.detach().argmax()
         else:
             # return np.random.choice(self.myRobot.get_possible_actions(state))
@@ -155,7 +171,6 @@ class DQNLearning(LearningAlgorithm):
         """Update value parameters using given batch of experience tuples.
         """
         states, actions, rewards, next_states = self.tensornize(experiences)
-
         # Get max predicted Q values (for next states) from target model
         Q_targets_next = self.target_network(next_states).detach().max(1)[0].unsqueeze(1)
         # Compute Q targets for current states
@@ -174,14 +189,14 @@ class DQNLearning(LearningAlgorithm):
 
     def tensornize(self, experiences):
         states, actions, rewards, next_states = experiences
-        return torch.tensor(states.reshape(-1, 4), dtype=torch.float32), torch.tensor(actions,
-                                                                                      dtype=torch.int64).unsqueeze(1), \
-               torch.tensor(rewards).unsqueeze(1), torch.tensor(states.reshape(-1, 4), dtype=torch.float32)
+        return torch.tensor(states.reshape(-1, 4), dtype=torch.float32),\
+               torch.tensor(actions, dtype=torch.int64).unsqueeze(1), \
+               torch.tensor(rewards, dtype=torch.float32).unsqueeze(1), \
+               torch.tensor(next_states.reshape(-1, 4), dtype=torch.float32)
 
     def soft_update(self):
         """Soft update model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
-
         Params
         ======
             local_model (PyTorch model): weights will be copied from
@@ -189,8 +204,8 @@ class DQNLearning(LearningAlgorithm):
             tau (float): interpolation parameter
         """
         for target_param, policy_param in zip(self.target_network.parameters(), self.policy_network.parameters()):
-            target_param.data.copy_(policy_param.data)
-            #target_param.data.copy_(self.TAU * local_param.data + (1.0 - self.TAU) * target_param.data)
+            # target_param.data.copy_(policy_param.data)
+            target_param.data.copy_(self.TAU * policy_param.data + (1.0 - self.TAU) * target_param.data)
 
     def get_policy(self):
         pass
@@ -199,7 +214,7 @@ class DQNLearning(LearningAlgorithm):
         pass
 
     def get_table(self):
-        pass
+        return self.dist
 
     def execute(self):
         while not self.stop:
@@ -208,7 +223,6 @@ class DQNLearning(LearningAlgorithm):
             a = self.select_action(self.state, epsilon=0.0)
             successor_state = self.myRobot.apply_action(self.myRobot.action_to_diff[a.item()])
             self.myWorld.step_reward()
-            # print(rew)
             self.state = successor_state
         # self.myWorld.draw_steps()
         # self.myWorld.draw_angles()

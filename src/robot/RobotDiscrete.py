@@ -1,5 +1,6 @@
 import itertools
 import logging
+import random
 
 import numpy as np
 
@@ -133,11 +134,11 @@ class RobotDiscrete(Robot):
             arm = np.array(np.where(np.abs(np.sum(action, 1))))[0][0]
             logging.debug("Moved arm {} from state {} to {}".format(arm, self.state[arm], (self.state + action)[arm]))
         elif self.diff_to_action[tuple([tuple(j) for j in action])] not in self.get_possible_actions(self.state):
-            # logging.error("Action is not valid!")
+            logging.error("Action is not valid!")
             return self.state.copy()
         else:
             pass
-            # logging.debug("Moved from state {} to {}".format(self.state, (self.state + action)))
+            logging.debug("Moved from state {} to {}".format(self.state, (self.state + action)))
         self.state += action
         return self.state.copy()
 
@@ -226,6 +227,14 @@ class RobotDiscrete(Robot):
         :return: shape of state
         """
         return self.state.shape
+
+    def get_all_possible_state_action(self):
+        state_action_pairs = []
+        for state in self.get_all_states():
+            for action in self.get_possible_actions(state):
+                state_action_pairs.append((state, action))
+        random.shuffle(state_action_pairs)
+        return state_action_pairs
 
     def get_arm_states_degree(self):
         """

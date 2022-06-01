@@ -71,6 +71,10 @@ class LearningAlgorithm:
         self.table_sum_array.append(np.sum(self.get_table()))
         return self.table_sum_array
 
+    def mean_reward(self):
+        self.table_sum_array.append(self.get_table())
+        return self.table_sum_array
+
     def execute(self):
         """
         Executes learned policy in an endless loop.
