@@ -18,7 +18,7 @@ from .ReplayBuffer import ReplayBuffer, Experience
 
 
 class DQNLearning(LearningAlgorithm):
-    load = True
+    load = False
 
     def __init__(self, myRobot, myWorld, ex):
         super().__init__(myRobot, myWorld, ex)
@@ -58,6 +58,7 @@ class DQNLearning(LearningAlgorithm):
         else:
             self.device = torch.device('cpu')
 
+        print(self.device)
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.GAMMA = 0.9
@@ -73,7 +74,7 @@ class DQNLearning(LearningAlgorithm):
         self.BATCH_SIZE = 1024
         self.MEMORY_SIZE = 16000
         self.LR = 0.0001
-        self.NUM_EPISODES = 16000
+        self.NUM_EPISODES = 32000
         self.STEPS_PER_EPISODE = 50
 
         input_size = self.myRobot.arms_num * self.myRobot.joints_per_arm_num
@@ -189,7 +190,7 @@ class DQNLearning(LearningAlgorithm):
 
     def tensornize(self, experiences):
         states, actions, rewards, next_states = experiences
-        return torch.tensor(states.reshape(-1, 4), dtype=torch.float32),\
+        return torch.tensor(states.reshape(-1, 4), dtype=torch.float32), \
                torch.tensor(actions, dtype=torch.int64).unsqueeze(1), \
                torch.tensor(rewards, dtype=torch.float32).unsqueeze(1), \
                torch.tensor(next_states.reshape(-1, 4), dtype=torch.float32)

@@ -24,6 +24,6 @@ class ReplayBuffer:
                                    replace=False)
         states, actions, rewards, next_state = \
             zip(*[self.buffer[idx] for idx in indices])
-        return np.array(states, dtype=np.float32), np.array(actions), \
+        return np.array(states, dtype=np.float32), np.array(actions, dtype=np.int64), \
                np.array(rewards, dtype=np.float32), np.array(next_state, dtype=np.float32),
 

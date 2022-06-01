@@ -18,10 +18,6 @@ Code is adapted from the official pybox2d example:
 https://github.com/pybox2d/pybox2d/blob/master/examples/backends/pyqt4_framework.py
 """
 
-# Learn = WalkAround.WalkAround
-
-# Learn = ValueIteration.ValueIteration
-
 
 class LearningThread(QtCore.QThread):
     """

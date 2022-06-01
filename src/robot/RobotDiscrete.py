@@ -132,13 +132,13 @@ class RobotDiscrete(Robot):
             if abs(np.sum(action)) != 1:
                 logging.error("Action is not valid!")
             arm = np.array(np.where(np.abs(np.sum(action, 1))))[0][0]
-            logging.debug("Moved arm {} from state {} to {}".format(arm, self.state[arm], (self.state + action)[arm]))
+            # logging.debug("Moved arm {} from state {} to {}".format(arm, self.state[arm], (self.state + action)[arm]))
         elif self.diff_to_action[tuple([tuple(j) for j in action])] not in self.get_possible_actions(self.state):
-            logging.error("Action is not valid!")
+            # logging.error("Action is not valid!")
             return self.state.copy()
         else:
             pass
-            logging.debug("Moved from state {} to {}".format(self.state, (self.state + action)))
+            # logging.debug("Moved from state {} to {}".format(self.state, (self.state + action)))
         self.state += action
         return self.state.copy()
 
