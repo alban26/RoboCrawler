@@ -57,7 +57,7 @@ class RobotSim:
 
         pos = (0, 0.8)
 
-        body_mass = 1
+        body_mass = 5
         self.body_size = (2.2, 0.8)
         body_friction = 1.0
 
@@ -82,7 +82,7 @@ class RobotSim:
         self.joints_mass = joints_mass
         self.joints_size = joints_size
         self.joints_friction = joints_friction
-        self.max_degree_error = 0.01  # in radians #0.05
+        self.max_degree_error = 0.001  # in radians #0.05
 
         # Margin to the upper right corner of the body
         body_arm1_joint_margin_body = (0.05, 0.05)
@@ -306,10 +306,10 @@ class RobotSim:
         return steps_done
 
     def lifted_off(self, vertices):
-        return vertices[0] > 0.15 and vertices[1] > 0.15
+        return vertices[0] > 0.03 and vertices[1] > 0.03
 
     def touched_down(self, vertices):
-        return vertices[0] < 0.03 or vertices[1] < 0.03
+        return vertices[0] < 0.022 or vertices[1] < 0.022
 
     def step_counter(self):
         """
@@ -349,11 +349,11 @@ class RobotSim:
     def draw_steps(self):
         plt.xlabel("Axis 1")
         plt.ylabel("Axis 2")
-        plt.plot(self.arm_1_step_y_data, label='Arm 1')
-        plt.plot(self.arm_2_step_y_data, label='Arm 2')
+        plt.plot(self.arm_1_step_y_data[50:], label='Arm 1')
+        plt.plot(self.arm_2_step_y_data[50:], label='Arm 2')
         plt.legend()
 
-        # plt.axis([0, 100, 0, 30])
+        plt.axis([0, 100, 0, 0.1])
         plt.show()
         # self.arm_1_step_x_data = []
         # self.arm_1_step_y_data = []
@@ -363,10 +363,10 @@ class RobotSim:
     def draw_angles(self):
         plt.xlabel("Axis 1")
         plt.ylabel("Axis 2")
-        plt.plot(self.arm1_j1_angles, label='Arm 1 Joint 1')
-        plt.plot(self.arm1_j2_angles, label='Arm 1 Joint 2')
-        plt.plot(self.arm2_j1_angles, label='Arm 2 Joint 1')
-        plt.plot(self.arm2_j2_angles, label='Arm 2 Joint 2')
+        plt.plot(self.arm1_j1_angles[50:], label='Arm 1 Joint 1')
+        plt.plot(self.arm1_j2_angles[50:], label='Arm 1 Joint 2')
+        plt.plot(self.arm2_j1_angles[50:], label='Arm 2 Joint 1')
+        plt.plot(self.arm2_j2_angles[50:], label='Arm 2 Joint 2')
         plt.legend()
 
         plt.show()

@@ -10,6 +10,7 @@ import seaborn as sns
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import stats
+from timeit import default_timer as timer
 
 from learning.LearningAlgorithm import LearningAlgorithm
 
@@ -17,7 +18,7 @@ from learning.LearningAlgorithm import LearningAlgorithm
 class ValueIteration(LearningAlgorithm):
     GAMMA = 0.98
 
-    load = False
+    load = True
 
     def __init__(self, myRobot, myWorld, ex):
 
@@ -27,6 +28,8 @@ class ValueIteration(LearningAlgorithm):
         self.policy = None
         self.value = None
         self.last_action_diff = None
+        self.total_reward = 0
+        self.steps = 0
 
     def reset(self):
 
@@ -40,7 +43,6 @@ class ValueIteration(LearningAlgorithm):
         self.std_dev = None
         self.state = self.myRobot.get_state()
         self.last_action_diff = np.zeros(self.state.shape)
-
 
     def calc_reward(self):
         all_possible_state_action_pairs = self.myRobot.get_all_possible_state_action().copy()
@@ -77,7 +79,7 @@ class ValueIteration(LearningAlgorithm):
         self.reward = reward_mean / k
 
         save_reward_string = datetime.now().strftime("%M_%S_%MS")
-        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-480-03-150.pkl", "wb"))
+        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-15-l.pkl", "wb"))
 
     def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
         if self.stop:
@@ -91,7 +93,7 @@ class ValueIteration(LearningAlgorithm):
             # self.reward = self.load_rewards_without_outliers()
         else:
             self.calc_reward()
-        # self.plot_rewards()
+        self.plot_rewards()
         # for x in np.nditer(self.reward, op_flags=['readwrite']):
         #     if abs(x) < 0:
         #         x[...] = 0
@@ -121,26 +123,33 @@ class ValueIteration(LearningAlgorithm):
         Executes learned policy in an endless loop.
         :return:
         """
-
+        start = time.time()
         while not self.stop:
             while self.pause and not self.stop:
                 time.sleep(0.1)
             a = self.get_greedy_action(self.state)
             state = self.myRobot.get_state().copy()
             successor_state = self.myRobot.apply_action(self.myRobot.action_to_diff[a])
-            reward = self.myWorld.step_reward()
-            self.execute_reward[tuple(state.flatten()) + (a,)] = reward
+            self.total_reward += self.myWorld.step_reward()
+            self.steps += self.myWorld.get_steps_done()
+            if self.total_reward >= 30:
+                break
+            # self.execute_reward[tuple(state.flatten()) + (a,)] = reward
             # print(rew)
             self.state = successor_state
         if self.load:
             self.myWorld.draw_steps()
             self.myWorld.draw_angles()
+        end = time.time()
+        print(self.steps)
+        print(self.total_reward)
+        print(self.total_reward / (end - start))
         self.save_reward_as_txt(execute=True)
 
-    # def plot_rewards(self):
-    #     plot = sns.kdeplot(self.reward.flatten(), bw=0.2, multiple="stack")
-    #     plt.xlabel("Reward")
-    #     plt.show()
+    def plot_rewards(self):
+        plot = sns.kdeplot(self.reward.flatten(), bw=0.2, multiple="stack")
+        plt.xlabel("Reward")
+        plt.show()
 
     def load_rewards(self):
         reward_mean = np.zeros(self.reward.shape)

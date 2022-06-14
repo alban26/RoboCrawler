@@ -3,6 +3,7 @@ import time
 from Box2D import *
 
 from robot.RobotDiscrete import RobotDiscrete
+from timeit import default_timer as timer
 
 
 class World:
@@ -19,6 +20,7 @@ class World:
         :param b2World: b2World from Box2D
         :param comm: Crawler_Communicator
         """
+        self.steps_done = 0
         self.renderer = renderer
         self.settings = settings
         self.reward_cap = 0.2  # cap reward under 1 to 0
@@ -27,8 +29,8 @@ class World:
         self.b2World = b2World
         self.ex = ex
         self.steps = 0
-        self.total_distance_old = 0
         self.use_real_robot = False
+        self.velocities = []
 
         self.init()
 
@@ -50,7 +52,7 @@ class World:
         groundBodyDef = b2BodyDef()
         groundBodyDef.position = (0, -0.4)
         groundBody = self.b2World.CreateBody(groundBodyDef)
-        groundBox = b2PolygonShape(box=(1000000, 0.4))
+        groundBox = b2PolygonShape(box=(500000, 0.4))
         groundBoxFixture = b2FixtureDef(shape=groundBox, categoryBits=0x0004, maskBits=0x0002)
         groundBody.CreateFixture(groundBoxFixture)
 
@@ -106,7 +108,6 @@ class World:
         robot_start_pos = self.robot_sim.get_body_pos()
         steps = 0
         counter = 0
-        # start = time.time()
         while True:  # Simulate until next/goal state of robot is reached
             if isinstance(self.robot, RobotDiscrete):
                 if self.robot_sim.update():
@@ -128,19 +129,19 @@ class World:
                 self.draw_signal.emit()  # calls self.draw() in other thread with render context (Qt)
             time.sleep(speed)  # parameter can be used to step slower.
             steps += 1
-        # end = time.time()
 
         # Without resetting velocity the reward of the next state is influenced by the current state.
         # With the resetting, it's a Markovian decisionproces.
         self.robot_sim.reset_velocity()
         # print("Steps " + str(steps) + " in " + str(round(end-start, 4)) + " Sekunden")
 
-        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0])  # - (self.get_steps_done() * 0.21)
+        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0])# - (self.get_steps_done() * 0.21)
         # self.print_vel()
 
         # if isinstance(self.robot, RobotDiscrete):
         #     if abs(reward) < self.reward_cap:  # cap reward to not learn from noise
         #         reward = 0
+
 
         # logging.debug("State: {}".format(self.robot.state))
         # logging.debug("Reward: {}".format(reward))
@@ -158,6 +159,9 @@ class World:
 
     def reset_robot_sim(self):
         self.robot_sim.reset()
+
+    def get_mean_velocity(self):
+        return sum(self.velocities) / len(self.velocities)
 
     def reset(self):
         """
