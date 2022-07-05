@@ -132,7 +132,7 @@ class ValueIteration(LearningAlgorithm):
             successor_state = self.myRobot.apply_action(self.myRobot.action_to_diff[a])
             self.total_reward += self.myWorld.step_reward()
             self.steps += self.myWorld.get_steps_done()
-            if self.total_reward >= 30:
+            if self.total_reward >= 50:
                 break
             # self.execute_reward[tuple(state.flatten()) + (a,)] = reward
             # print(rew)
@@ -141,9 +141,9 @@ class ValueIteration(LearningAlgorithm):
             self.myWorld.draw_steps()
             self.myWorld.draw_angles()
         end = time.time()
-        print(self.steps)
-        print(self.total_reward)
-        print(self.total_reward / (end - start))
+        print(str(self.steps) + " steps")
+        print(str(self.total_reward) + " meter")
+        print(str(round(self.total_reward / (end - start), 2)) + "m/s")
         self.save_reward_as_txt(execute=True)
 
     def plot_rewards(self):

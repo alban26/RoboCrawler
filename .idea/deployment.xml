@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="jetson2@192.168.0.40:22" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="Jetson2">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="jetson2@192.168.0.40:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/jetson2/HTWG/RoboCrawler" local="$PROJECT_DIR$" />
+            <mapping local="" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>

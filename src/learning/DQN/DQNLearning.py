@@ -66,7 +66,7 @@ class DQNLearning(LearningAlgorithm):
         # Epsilon Greedy Parameter
         self.EPS_START = 1.0
         self.EPS_END = 0.01
-        self.EPS_DECAY = 0.9999
+        self.EPS_DECAY = 0.999
 
         # Wie oft soll das target Network aktualisiert werden
         self.TARGET_UPDATE = 10
@@ -122,7 +122,6 @@ class DQNLearning(LearningAlgorithm):
                             experiences = self.memory.sample(self.BATCH_SIZE)
                             self.train(experiences)
 
-                # self.dist = self.myWorld.x_pos() - x_position_start
                 self.dist = sum_reward / self.STEPS_PER_EPISODE
                 epsilon = max(self.EPS_END, self.EPS_DECAY * epsilon)
                 self.ex.update_ui_step_dqn(episode, epsilon)
@@ -171,31 +170,31 @@ class DQNLearning(LearningAlgorithm):
     def train(self, experiences):
         """Update value parameters using given batch of experience tuples.
         """
-        states, actions, rewards, next_states = self.tensornize(experiences)
+        states, actions, rewards, next_states = self.transform_tensor(experiences)
         # Get max predicted Q values (for next states) from target model
-        Q_targets_next = self.target_network(next_states).detach().max(1)[0].unsqueeze(1)
+        next_q_vals = self.target_network(next_states).detach().max(1)[0].unsqueeze(1)
         # Compute Q targets for current states
-        Q_targets = rewards + (self.GAMMA * Q_targets_next)
+        target_q_vals = rewards + (self.GAMMA * next_q_vals)
 
         # Get expected Q values from local model
-        Q_expected = self.policy_network(states).gather(1, actions)
+        expected_q_vals = self.policy_network(states).gather(1, actions)
 
-        loss = F.mse_loss(Q_expected, Q_targets)
+        loss = F.mse_loss(expected_q_vals, target_q_vals)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
         # ------------------- update target network ------------------- #
-        self.soft_update()
+        self.target_update()
 
-    def tensornize(self, experiences):
+    def transform_tensor(self, experiences):
         states, actions, rewards, next_states = experiences
         return torch.tensor(states.reshape(-1, 4), dtype=torch.float32), \
                torch.tensor(actions, dtype=torch.int64).unsqueeze(1), \
                torch.tensor(rewards, dtype=torch.float32).unsqueeze(1), \
                torch.tensor(next_states.reshape(-1, 4), dtype=torch.float32)
 
-    def soft_update(self):
+    def target_update(self):
         """Soft update model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
         Params

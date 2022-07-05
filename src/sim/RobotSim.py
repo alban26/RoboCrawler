@@ -156,7 +156,7 @@ class RobotSim:
                         upperAngle=self.robot_model.state_range_rad_joints[joint][1],
                         enableLimit=True,
                         enableMotor=True,
-                        maxMotorTorque=1000000.0,
+                        maxMotorTorque=100000.0,
                         motorSpeed=0.0)
                     joints.append(Joint(joint_body, body_joint1_joint))
                 else:
@@ -168,7 +168,7 @@ class RobotSim:
                         upperAngle=self.robot_model.state_range_rad_joints[joint][1],
                         enableLimit=True,
                         enableMotor=True,
-                        maxMotorTorque=1000000.0,
+                        maxMotorTorque=100000.0,
                         motorSpeed=0.0)
                     joints.append(Joint(joint_body, joint_n_1_joint_n_joint))
             self.arms.append(joints)
@@ -353,7 +353,7 @@ class RobotSim:
         plt.plot(self.arm_2_step_y_data[50:], label='Arm 2')
         plt.legend()
 
-        plt.axis([0, 100, 0, 0.1])
+        # plt.axis([0, 100, 0, 0.1])
         plt.show()
         # self.arm_1_step_x_data = []
         # self.arm_1_step_y_data = []

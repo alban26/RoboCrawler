@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="1ebcdf29-d335-4348-8be9-ad87d2a5f0bb" name="Jetson2">
+        <fileTransfer rootFolder="/home/jetson2/HTWG/RoboCrawler" accessType="SFTP" host="192.168.0.40" port="22" sshConfigId="0398768d-286f-4442-931f-9a0b23806628" sshConfig="jetson2@192.168.0.40:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

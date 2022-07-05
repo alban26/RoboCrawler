@@ -114,8 +114,8 @@ class World:
                     break
             if counter % 100 == 0:
                 self.robot_sim.step_counter()
-                # self.robot_sim.collect_steps()
-                # self.robot_sim.collect_angles()
+                self.robot_sim.collect_steps()
+                self.robot_sim.collect_angles()
             counter += 1
             if self.settings.hz > 0.0:
                 time_step = 1.0 / self.settings.hz
