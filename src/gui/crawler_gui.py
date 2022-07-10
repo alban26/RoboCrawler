@@ -126,7 +126,7 @@ class Ex(QMainWindow):
         :return:
         """
         plt.plot(self.fw.learning_algorithm.sum_table())
-        plt.xlabel("Zeitschritt")
+        plt.xlabel("Iteration")
         plt.ylabel("Wertsumme")
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
@@ -139,7 +139,6 @@ class Ex(QMainWindow):
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         plt.clf()
-
 
     def updateRobotAttributesFromGUI(self):
         """
@@ -236,7 +235,7 @@ class Ex(QMainWindow):
             self.improve_every_steps = 1
             self.ui.param_learning_steps_txt.setText("1")
 
-#        self.tricks = self.ui.cbTricks.isChecked()
+        #        self.tricks = self.ui.cbTricks.isChecked()
         self.invert_learning = self.ui.cbInvertLearning.isChecked()
 
         self.learning_algorithm = self.ui.choose_learning_algorithm.currentIndex()

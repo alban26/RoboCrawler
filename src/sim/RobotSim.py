@@ -366,8 +366,8 @@ class RobotSim:
         self.arm2_j2_states.append(states[1][1])
 
     def draw_steps(self):
-        plt.xlabel("Reichweite in Meter")
-        plt.ylabel("Höhe in Meter")
+        plt.xlabel("Zeitschritt")
+        plt.ylabel("Schritthöhe in Meter")
         plt.plot(self.arm_1_step_y_data[10:], label='Bein 1')
         plt.plot(self.arm_2_step_y_data[10:], label='Bein 2')
         plt.legend()

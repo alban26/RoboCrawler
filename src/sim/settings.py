@@ -10,9 +10,9 @@ class Settings(object):
     """
 
     # Physics options
-    hz = 150.0
-    velocityIterations = 16
-    positionIterations = 6
+    hz = 120.0
+    velocityIterations = 8
+    positionIterations = 3
     # Makes physics results more accurate (see Box2D wiki)
     enableWarmStarting = True
     enableContinuous = True     # Calculate time of impact

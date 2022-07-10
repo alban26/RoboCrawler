@@ -113,7 +113,7 @@ class World:
                 if self.robot_sim.update():
                     break
             if counter % 100 == 0:
-                pass
+                self.robot_sim.step_counter()
 
             counter += 1
             if self.settings.hz > 0.0:
@@ -137,7 +137,7 @@ class World:
         reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0])  # - (self.get_steps_done() * 0.21)
         # self.print_vel()
 
-        self.robot_sim.step_counter()
+        # Daten zur Auswertung sammeln
         self.robot_sim.collect_steps()
         self.robot_sim.collect_angles()
         self.robot_sim.collect_states()

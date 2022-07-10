@@ -191,7 +191,7 @@ class Framework:
         self.settings = settings.Settings()
         self.screenSize = b2Vec2(0, 0)
         self.setCenter((0, 10.0 * 20.0))
-        self.setZoom(40.0)
+        self.setZoom(60.0)
 
     def setCenter(self, value):
         """

@@ -18,7 +18,7 @@ from .ReplayBuffer import ReplayBuffer, Experience
 
 
 class DQNLearning(LearningAlgorithm):
-    load = False
+    load = True
 
     def __init__(self, myRobot, myWorld, ex):
         super().__init__(myRobot, myWorld, ex)
@@ -74,7 +74,7 @@ class DQNLearning(LearningAlgorithm):
         self.BATCH_SIZE = 1024
         self.MEMORY_SIZE = 16000
         self.LR = 0.0001
-        self.NUM_EPISODES = 32000
+        self.NUM_EPISODES = 8000
         self.STEPS_PER_EPISODE = 50
 
         input_size = self.myRobot.arms_num * self.myRobot.joints_per_arm_num

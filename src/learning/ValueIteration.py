@@ -16,7 +16,7 @@ from learning.LearningAlgorithm import LearningAlgorithm
 
 
 class ValueIteration(LearningAlgorithm):
-    GAMMA = 0.98
+    GAMMA = 0.99
 
     load = True
 
@@ -93,7 +93,7 @@ class ValueIteration(LearningAlgorithm):
             # self.reward = self.load_rewards_without_outliers()
         else:
             self.calc_reward()
-        self.plot_rewards()
+        # self.plot_rewards()
         # for x in np.nditer(self.reward, op_flags=['readwrite']):
         #     if abs(x) < 0:
         #         x[...] = 0
