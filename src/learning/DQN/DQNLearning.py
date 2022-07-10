@@ -125,10 +125,11 @@ class DQNLearning(LearningAlgorithm):
                 self.dist = sum_reward / self.STEPS_PER_EPISODE
                 epsilon = max(self.EPS_END, self.EPS_DECAY * epsilon)
                 self.ex.update_ui_step_dqn(episode, epsilon)
-
+                if episode % 500 == 0:
+                    self.myWorld.reset_robot_sim()
                 # Alle 1000 Episoden das Netz abspeichern
                 if episode % 1000 == 0:
-                    self.myWorld.reset_robot_sim()
+
                     save_network_string = datetime.now().strftime("%M_%S_%MS")
                     pickle.dump(self.policy_network,
                                 open(f"../neural_networks/{save_network_string}-350_109-Schritt-04-150.pkl", "wb"))

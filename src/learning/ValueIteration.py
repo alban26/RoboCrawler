@@ -140,6 +140,7 @@ class ValueIteration(LearningAlgorithm):
         if self.load:
             self.myWorld.draw_steps()
             self.myWorld.draw_angles()
+            self.myWorld.draw_states()
         end = time.time()
         print(str(self.steps) + " steps")
         print(str(self.total_reward) + " meter")
@@ -149,6 +150,8 @@ class ValueIteration(LearningAlgorithm):
     def plot_rewards(self):
         plot = sns.kdeplot(self.reward.flatten(), bw=0.2, multiple="stack")
         plt.xlabel("Reward")
+        plt.ylabel("Häufigkeitsdichte")
+        plt.savefig("rewards.png")
         plt.show()
 
     def load_rewards(self):

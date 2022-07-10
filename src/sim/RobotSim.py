@@ -74,6 +74,11 @@ class RobotSim:
         self.arm2_j1_angles = []
         self.arm2_j2_angles = []
 
+        self.arm1_j1_states = []
+        self.arm1_j2_states = []
+        self.arm2_j1_states = []
+        self.arm2_j2_states = []
+
         wheel_mass = 1
         self.wheel_radius = 0.25
         wheel_friction = 0.1
@@ -82,7 +87,7 @@ class RobotSim:
         self.joints_mass = joints_mass
         self.joints_size = joints_size
         self.joints_friction = joints_friction
-        self.max_degree_error = 0.001  # in radians #0.05
+        self.max_degree_error = 0.005  # in radians #0.05
 
         # Margin to the upper right corner of the body
         body_arm1_joint_margin_body = (0.05, 0.05)
@@ -346,13 +351,27 @@ class RobotSim:
                 self.arm_2_step_x_data.append(p2[0])
                 self.arm_2_step_y_data.append(p2[1])
 
-    def draw_steps(self):
-        plt.xlabel("Axis 1")
-        plt.ylabel("Axis 2")
-        plt.plot(self.arm_1_step_y_data[50:], label='Arm 1')
-        plt.plot(self.arm_2_step_y_data[50:], label='Arm 2')
-        plt.legend()
+    def collect_angles(self):
+        angles = self.robot_model.get_arm_states_degree()
+        self.arm1_j1_angles.append(angles[0])
+        self.arm1_j2_angles.append(angles[1])
+        self.arm2_j1_angles.append(angles[2])
+        self.arm2_j2_angles.append(angles[3])
 
+    def collect_states(self):
+        states = self.robot_model.get_state()
+        self.arm1_j1_states.append(states[0][0])
+        self.arm1_j2_states.append(states[0][1])
+        self.arm2_j1_states.append(states[1][0])
+        self.arm2_j2_states.append(states[1][1])
+
+    def draw_steps(self):
+        plt.xlabel("Reichweite in Meter")
+        plt.ylabel("Höhe in Meter")
+        plt.plot(self.arm_1_step_y_data[10:], label='Bein 1')
+        plt.plot(self.arm_2_step_y_data[10:], label='Bein 2')
+        plt.legend()
+        plt.savefig("steps.png")
         # plt.axis([0, 100, 0, 0.1])
         plt.show()
         # self.arm_1_step_x_data = []
@@ -361,22 +380,26 @@ class RobotSim:
         # self.arm_2_step_y_data = []
 
     def draw_angles(self):
-        plt.xlabel("Axis 1")
-        plt.ylabel("Axis 2")
-        plt.plot(self.arm1_j1_angles[50:], label='Arm 1 Joint 1')
-        plt.plot(self.arm1_j2_angles[50:], label='Arm 1 Joint 2')
-        plt.plot(self.arm2_j1_angles[50:], label='Arm 2 Joint 1')
-        plt.plot(self.arm2_j2_angles[50:], label='Arm 2 Joint 2')
+        plt.xlabel("Zeitschritt")
+        plt.ylabel("Winkel in Grad")
+        plt.plot(self.arm1_j1_angles[10:], label='Bein 1 Gelenk 1')
+        plt.plot(self.arm1_j2_angles[10:], label='Bein 1 Gelenk 2')
+        plt.plot(self.arm2_j1_angles[10:], label='Bein 2 Gelenk 1')
+        plt.plot(self.arm2_j2_angles[10:], label='Bein 2 Gelenk 2')
         plt.legend()
-
+        plt.savefig("angles.png")
         plt.show()
 
-    def collect_angles(self):
-        angles = self.robot_model.get_arm_states_degree()
-        self.arm1_j1_angles.append(angles[0])
-        self.arm1_j2_angles.append(angles[1])
-        self.arm2_j1_angles.append(angles[2])
-        self.arm2_j2_angles.append(angles[3])
+    def draw_states(self):
+        plt.xlabel("Zeitschritt")
+        plt.ylabel("Zustand")
+        plt.plot(self.arm1_j1_states[10:], label='Bein 1 Gelenk 1')
+        plt.plot(self.arm1_j2_states[10:], label='Bein 1 Gelenk 2')
+        plt.plot(self.arm2_j1_states[10:], label='Bein 2 Gelenk 1')
+        plt.plot(self.arm2_j2_states[10:], label='Bein 2 Gelenk 2')
+        plt.legend()
+        plt.savefig("states.png")
+        plt.show()
 
     def update(self):
         """

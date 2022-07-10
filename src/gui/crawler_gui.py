@@ -126,16 +126,16 @@ class Ex(QMainWindow):
         :return:
         """
         plt.plot(self.fw.learning_algorithm.sum_table())
-        plt.xlabel("Steps")
-        plt.ylabel("Value table sum")
+        plt.xlabel("Zeitschritt")
+        plt.ylabel("Wertsumme")
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         plt.clf()
 
     def draw_mean_reward(self):
         plt.plot(self.fw.learning_algorithm.mean_reward())
-        plt.xlabel("Episodes")
-        plt.ylabel("Average reward")
+        plt.xlabel("Episoden")
+        plt.ylabel("Reward Mittelwert")
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         plt.clf()
