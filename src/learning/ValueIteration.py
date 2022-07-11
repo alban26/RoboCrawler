@@ -16,7 +16,7 @@ from learning.LearningAlgorithm import LearningAlgorithm
 
 
 class ValueIteration(LearningAlgorithm):
-    GAMMA = 0.99
+    GAMMA = 0.9
 
     load = True
 
@@ -79,7 +79,7 @@ class ValueIteration(LearningAlgorithm):
         self.reward = reward_mean / k
 
         save_reward_string = datetime.now().strftime("%M_%S_%MS")
-        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-15-l.pkl", "wb"))
+        pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-15-fast.pkl", "wb"))
 
     def learn(self, steps, min_epsilon, max_epsilon, improve_every_steps, invert_learning, ui):
         if self.stop:
@@ -132,16 +132,16 @@ class ValueIteration(LearningAlgorithm):
             successor_state = self.myRobot.apply_action(self.myRobot.action_to_diff[a])
             self.total_reward += self.myWorld.step_reward()
             self.steps += self.myWorld.get_steps_done()
-            if self.total_reward >= 50:
+            if self.total_reward >= 30:
                 break
             # self.execute_reward[tuple(state.flatten()) + (a,)] = reward
             # print(rew)
             self.state = successor_state
+        end = time.time()
         if self.load:
             self.myWorld.draw_steps()
             self.myWorld.draw_angles()
             self.myWorld.draw_states()
-        end = time.time()
         print(str(self.steps) + " steps")
         print(str(self.total_reward) + " meter")
         print(str(round(self.total_reward / (end - start), 2)) + "m/s")

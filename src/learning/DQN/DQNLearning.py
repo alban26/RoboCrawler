@@ -18,7 +18,7 @@ from .ReplayBuffer import ReplayBuffer, Experience
 
 
 class DQNLearning(LearningAlgorithm):
-    load = True
+    load = False
 
     def __init__(self, myRobot, myWorld, ex):
         super().__init__(myRobot, myWorld, ex)
@@ -43,6 +43,8 @@ class DQNLearning(LearningAlgorithm):
         self.optimizer = None
         self.time_step = None
         self.dist = None
+        self.total_reward = 0
+        self.steps = 0
         logging.debug("DQN-Learning init: ".format())
 
     def reset(self):
@@ -60,19 +62,19 @@ class DQNLearning(LearningAlgorithm):
 
         print(self.device)
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+        # 3
         self.GAMMA = 0.9
         self.TAU = 0.1
         # Epsilon Greedy Parameter
         self.EPS_START = 1.0
         self.EPS_END = 0.01
-        self.EPS_DECAY = 0.999
+        self.EPS_DECAY = 0.9995
 
         # Wie oft soll das target Network aktualisiert werden
         self.TARGET_UPDATE = 10
 
-        self.BATCH_SIZE = 1024
-        self.MEMORY_SIZE = 16000
+        self.BATCH_SIZE = 512
+        self.MEMORY_SIZE = 8000
         self.LR = 0.0001
         self.NUM_EPISODES = 8000
         self.STEPS_PER_EPISODE = 50
@@ -101,6 +103,7 @@ class DQNLearning(LearningAlgorithm):
         if self.load:
             self.policy_network = self.load_neural_network()
         else:
+            start = time.time()
             epsilon = self.EPS_START
             for episode in range(self.NUM_EPISODES):
                 rnd = np.random.choice(np.arange(len(states)))
@@ -132,11 +135,12 @@ class DQNLearning(LearningAlgorithm):
 
                     save_network_string = datetime.now().strftime("%M_%S_%MS")
                     pickle.dump(self.policy_network,
-                                open(f"../neural_networks/{save_network_string}-350_109-Schritt-04-150.pkl", "wb"))
-
+                                open(f"../neural_networks/{save_network_string}-8KEP-21-3.pkl", "wb"))
+            end = time.time()
             save_network_string = datetime.now().strftime("%M_%S_%MS")
             pickle.dump(self.policy_network,
-                        open(f"../neural_networks/{save_network_string}-350_109-Schritt-04-150.pkl", "wb"))
+                        open(f"../neural_networks/{save_network_string}-final-8KEP-21-3.pkl", "wb"))
+            print(str(round((end - start) / 60, 2)) + "Minuten")
         self.ex.update_ui_finished()
         return True
 
@@ -218,12 +222,23 @@ class DQNLearning(LearningAlgorithm):
         return self.dist
 
     def execute(self):
+        start = time.time()
         while not self.stop:
             while self.pause and not self.stop:
                 time.sleep(0.1)
             a = self.select_action(self.state, epsilon=0.0)
             successor_state = self.myRobot.apply_action(self.myRobot.action_to_diff[a.item()])
-            self.myWorld.step_reward()
+            self.total_reward += self.myWorld.step_reward()
+            self.steps += self.myWorld.get_steps_done()
             self.state = successor_state
-        # self.myWorld.draw_steps()
-        # self.myWorld.draw_angles()
+            if self.total_reward >= 30:
+                break
+        end = time.time()
+        print(str(self.steps) + " steps")
+        print(str(self.total_reward) + " meter")
+        print(str(round(self.total_reward / (end - start), 2)) + "m/s")
+        if self.load:
+            self.myWorld.draw_steps()
+            self.myWorld.draw_angles()
+            self.myWorld.draw_states()
+

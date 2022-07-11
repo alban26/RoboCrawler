@@ -114,6 +114,7 @@ class World:
                     break
             if counter % 100 == 0:
                 self.robot_sim.step_counter()
+                # self.robot_sim.collect_steps()
 
             counter += 1
             if self.settings.hz > 0.0:
@@ -134,13 +135,13 @@ class World:
         self.robot_sim.reset_velocity()
         # print("Steps " + str(steps) + " in " + str(round(end-start, 4)) + " Sekunden")
 
-        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0])  # - (self.get_steps_done() * 0.21)
+        reward = (self.robot_sim.get_body_pos()[0] - robot_start_pos[0])# - (self.get_steps_done() * 0.21)
         # self.print_vel()
 
         # Daten zur Auswertung sammeln
-        self.robot_sim.collect_steps()
-        self.robot_sim.collect_angles()
-        self.robot_sim.collect_states()
+
+        # self.robot_sim.collect_angles()
+        # self.robot_sim.collect_states()
 
         # if isinstance(self.robot, RobotDiscrete):
         #     if abs(reward) < self.reward_cap:  # cap reward to not learn from noise

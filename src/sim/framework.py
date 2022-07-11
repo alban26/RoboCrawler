@@ -191,12 +191,11 @@ class Framework:
         self.settings = settings.Settings()
         self.screenSize = b2Vec2(0, 0)
         self.setCenter((0, 10.0 * 20.0))
-        self.setZoom(60.0)
+        self.setZoom(45.0)
 
     def setCenter(self, value):
         """
         Updates the view offset based on the center of the screen.
-
         Tells the debug draw to update its values as well.
         :return:
         """

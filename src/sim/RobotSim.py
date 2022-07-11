@@ -311,10 +311,10 @@ class RobotSim:
         return steps_done
 
     def lifted_off(self, vertices):
-        return vertices[0] > 0.03 and vertices[1] > 0.03
+        return vertices[0] > 0.023 and vertices[1] > 0.023
 
     def touched_down(self, vertices):
-        return vertices[0] < 0.022 or vertices[1] < 0.022
+        return vertices[0] < 0.02 or vertices[1] < 0.02
 
     def step_counter(self):
         """
@@ -368,11 +368,11 @@ class RobotSim:
     def draw_steps(self):
         plt.xlabel("Zeitschritt")
         plt.ylabel("Schritthöhe in Meter")
-        plt.plot(self.arm_1_step_y_data[10:], label='Bein 1')
-        plt.plot(self.arm_2_step_y_data[10:], label='Bein 2')
+        plt.plot(self.arm_1_step_y_data[35:], label='Bein 1')
+        plt.plot(self.arm_2_step_y_data[35:], label='Bein 2')
         plt.legend()
         plt.savefig("steps.png")
-        # plt.axis([0, 100, 0, 0.1])
+        # plt.axis([0, 160, 0, 0.04])
         plt.show()
         # self.arm_1_step_x_data = []
         # self.arm_1_step_y_data = []
@@ -382,10 +382,10 @@ class RobotSim:
     def draw_angles(self):
         plt.xlabel("Zeitschritt")
         plt.ylabel("Winkel in Grad")
-        plt.plot(self.arm1_j1_angles[10:], label='Bein 1 Gelenk 1')
-        plt.plot(self.arm1_j2_angles[10:], label='Bein 1 Gelenk 2')
-        plt.plot(self.arm2_j1_angles[10:], label='Bein 2 Gelenk 1')
-        plt.plot(self.arm2_j2_angles[10:], label='Bein 2 Gelenk 2')
+        plt.plot(self.arm1_j1_angles[20:], label='Bein 1 Gelenk 1')
+        plt.plot(self.arm1_j2_angles[20:], label='Bein 1 Gelenk 2')
+        plt.plot(self.arm2_j1_angles[20:], label='Bein 2 Gelenk 1')
+        plt.plot(self.arm2_j2_angles[20:], label='Bein 2 Gelenk 2')
         plt.legend()
         plt.savefig("angles.png")
         plt.show()
@@ -393,10 +393,10 @@ class RobotSim:
     def draw_states(self):
         plt.xlabel("Zeitschritt")
         plt.ylabel("Zustand")
-        plt.plot(self.arm1_j1_states[10:], label='Bein 1 Gelenk 1')
-        plt.plot(self.arm1_j2_states[10:], label='Bein 1 Gelenk 2')
-        plt.plot(self.arm2_j1_states[10:], label='Bein 2 Gelenk 1')
-        plt.plot(self.arm2_j2_states[10:], label='Bein 2 Gelenk 2')
+        plt.plot(self.arm1_j1_states[20:], label='Bein 1 Gelenk 1')
+        plt.plot(self.arm1_j2_states[20:], label='Bein 1 Gelenk 2')
+        plt.plot(self.arm2_j1_states[20:], label='Bein 2 Gelenk 1')
+        plt.plot(self.arm2_j2_states[20:], label='Bein 2 Gelenk 2')
         plt.legend()
         plt.savefig("states.png")
         plt.show()
