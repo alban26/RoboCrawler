@@ -100,6 +100,7 @@ class WalkAround(LearningAlgorithm):
     def change_state(self, new_state):
         self.myRobot.state = np.array([[int(new_state[1]), int(new_state[2])], [int(new_state[3]), int(new_state[4])]])
         self.myWorld.step_reward()
+        print(self.myRobot.get_arm_states_degree())
 
     def walk(self, steps):
         steps = int(steps / 2)

@@ -18,7 +18,7 @@ from .ReplayBuffer import ReplayBuffer, Experience
 
 
 class DQNLearning(LearningAlgorithm):
-    load = False
+    load = True
 
     def __init__(self, myRobot, myWorld, ex):
         super().__init__(myRobot, myWorld, ex)
@@ -62,20 +62,19 @@ class DQNLearning(LearningAlgorithm):
 
         print(self.device)
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # 3
         self.GAMMA = 0.9
         self.TAU = 0.1
         # Epsilon Greedy Parameter
-        self.EPS_START = 1.0
+        self.EPS_START = 0.5
         self.EPS_END = 0.01
-        self.EPS_DECAY = 0.9995
+        self.EPS_DECAY = 0.9999
 
         # Wie oft soll das target Network aktualisiert werden
-        self.TARGET_UPDATE = 10
+        self.TARGET_UPDATE = 20
 
         self.BATCH_SIZE = 512
         self.MEMORY_SIZE = 8000
-        self.LR = 0.0001
+        self.LR = 0.001
         self.NUM_EPISODES = 8000
         self.STEPS_PER_EPISODE = 50
 
@@ -135,11 +134,11 @@ class DQNLearning(LearningAlgorithm):
 
                     save_network_string = datetime.now().strftime("%M_%S_%MS")
                     pickle.dump(self.policy_network,
-                                open(f"../neural_networks/{save_network_string}-8KEP-21-3.pkl", "wb"))
+                                open(f"../neural_networks/{save_network_string}-4.pkl", "wb"))
             end = time.time()
             save_network_string = datetime.now().strftime("%M_%S_%MS")
             pickle.dump(self.policy_network,
-                        open(f"../neural_networks/{save_network_string}-final-8KEP-21-3.pkl", "wb"))
+                        open(f"../neural_networks/{save_network_string}-final-4.pkl", "wb"))
             print(str(round((end - start) / 60, 2)) + "Minuten")
         self.ex.update_ui_finished()
         return True

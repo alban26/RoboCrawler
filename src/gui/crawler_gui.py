@@ -3,6 +3,7 @@ import pickle
 import sys
 from tkinter import filedialog
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from PyQt5 import QtGui, QtWidgets
@@ -13,6 +14,7 @@ from gui.gui import Ui_MainWindow
 from robot.Robot import Mode
 from robot.RobotDiscrete import RobotDiscrete
 from sim.framework import Framework
+matplotlib.rcParams.update({'font.size': 12})
 
 
 class Ex(QMainWindow):

@@ -1,5 +1,6 @@
 import math
 
+import matplotlib
 import numpy
 import numpy as np
 from Box2D import *
@@ -7,6 +8,7 @@ import logging
 from collections import deque
 
 from matplotlib import pyplot as plt
+matplotlib.rcParams.update({'font.size': 12})
 from matplotlib.pyplot import axis
 
 from robot.RobotDiscrete import RobotDiscrete
