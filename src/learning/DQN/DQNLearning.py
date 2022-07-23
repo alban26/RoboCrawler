@@ -67,13 +67,13 @@ class DQNLearning(LearningAlgorithm):
         # Epsilon Greedy Parameter
         self.EPS_START = 0.5
         self.EPS_END = 0.01
-        self.EPS_DECAY = 0.9999
+        self.EPS_DECAY = 0.999
 
         # Wie oft soll das target Network aktualisiert werden
-        self.TARGET_UPDATE = 20
+        self.TARGET_UPDATE = 10
 
-        self.BATCH_SIZE = 512
-        self.MEMORY_SIZE = 8000
+        self.BATCH_SIZE = 1024
+        self.MEMORY_SIZE = 16000
         self.LR = 0.001
         self.NUM_EPISODES = 8000
         self.STEPS_PER_EPISODE = 50
@@ -90,7 +90,8 @@ class DQNLearning(LearningAlgorithm):
         self.last_action_diff = np.zeros(self.myRobot.joints_per_arm_num)
 
         self.memory = ReplayBuffer(capacity=self.MEMORY_SIZE)
-        self.optimizer = optim.Adam(params=self.policy_network.parameters(), lr=self.LR)
+        # self.optimizer = optim.Adam(params=self.policy_network.parameters(), lr=self.LR)
+        self.optimizer = optim.SGD(self.policy_network.parameters(), lr=0.1, momentum=0.9)
 
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.time_step = 0

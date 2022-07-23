@@ -3,18 +3,19 @@ import pickle
 import sys
 from tkinter import filedialog
 
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtWidgets import *
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-
+import torch
 from gui.gui import Ui_MainWindow
 from robot.Robot import Mode
 from robot.RobotDiscrete import RobotDiscrete
 from sim.framework import Framework
-matplotlib.rcParams.update({'font.size': 12})
+matplotlib.rcParams.update({'font.size': 13})
 
 
 class Ex(QMainWindow):
@@ -134,8 +135,24 @@ class Ex(QMainWindow):
         self.fig.canvas.flush_events()
         plt.clf()
 
+    def get_moving_average(self, period, values):
+        values = torch.tensor(values, dtype=torch.float)
+        if len(values) >= period:
+            moving_avg = values.unfold(dimension=0, size=period, step=1) \
+                .mean(dim=1).flatten(start_dim=0).cpu()
+            moving_avg = torch.cat((torch.zeros(period - 1).cpu(), moving_avg))
+            return moving_avg.numpy()
+        else:
+            moving_avg = torch.zeros(len(values)).cpu()
+            return moving_avg.numpy()
+
     def draw_mean_reward(self):
-        plt.plot(self.fw.learning_algorithm.mean_reward())
+        values = self.fw.learning_algorithm.mean_reward()
+
+        plt.plot(values)
+        plt.plot(self.get_moving_average(100, values))
+        # if len(values) % 10 == 0:
+        #    plt.plot(self.get_mean_reward_avg(values=values))
         plt.xlabel("Episoden")
         plt.ylabel("Reward Mittelwert")
         self.fig.canvas.draw()

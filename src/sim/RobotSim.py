@@ -8,7 +8,7 @@ import logging
 from collections import deque
 
 from matplotlib import pyplot as plt
-matplotlib.rcParams.update({'font.size': 12})
+matplotlib.rcParams.update({'font.size': 13})
 from matplotlib.pyplot import axis
 
 from robot.RobotDiscrete import RobotDiscrete
