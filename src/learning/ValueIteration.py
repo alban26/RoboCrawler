@@ -16,7 +16,7 @@ from learning.LearningAlgorithm import LearningAlgorithm
 
 
 class ValueIteration(LearningAlgorithm):
-    GAMMA = 0.9
+    GAMMA = 0.98
 
     load = True
 

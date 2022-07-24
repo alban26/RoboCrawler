@@ -368,20 +368,25 @@ class RobotSim:
         self.arm2_j2_states.append(states[1][1])
 
     def draw_steps(self):
+        fig_step = plt.figure()
         plt.xlabel("Zeitschritt")
         plt.ylabel("Schritthöhe in Meter")
-        plt.plot(self.arm_1_step_y_data[35:], label='Bein 1')
-        plt.plot(self.arm_2_step_y_data[35:], label='Bein 2')
+        plt.plot(self.arm_1_step_y_data[30:], label='Bein 1')
+        plt.plot(self.arm_2_step_y_data[30:], label='Bein 2')
         plt.legend()
-        plt.savefig("steps.png")
-        # plt.axis([0, 160, 0, 0.04])
-        plt.show()
+        # x1, x2, y1, y2 = plt.axis()
+        # plt.axis((x1, x2, 0, 0.05))
+        fig_step.savefig("steps.png")
+
+        # plt.show()
+        # fig_step.close()
         # self.arm_1_step_x_data = []
         # self.arm_1_step_y_data = []
         # self.arm_2_step_x_data = []
         # self.arm_2_step_y_data = []
 
     def draw_angles(self):
+        fig_ang = plt.figure()
         plt.xlabel("Zeitschritt")
         plt.ylabel("Winkel in Grad")
         plt.plot(self.arm1_j1_angles[20:], label='Bein 1 Gelenk 1')
@@ -389,10 +394,12 @@ class RobotSim:
         plt.plot(self.arm2_j1_angles[20:], label='Bein 2 Gelenk 1')
         plt.plot(self.arm2_j2_angles[20:], label='Bein 2 Gelenk 2')
         plt.legend()
-        plt.savefig("angles.png")
-        plt.show()
+        fig_ang.savefig("angles.png")
+        # plt.show()
+        # fig_ang.close()
 
     def draw_states(self):
+        fig_stat = plt.figure()
         plt.xlabel("Zeitschritt")
         plt.ylabel("Zustand")
         plt.plot(self.arm1_j1_states[20:], label='Bein 1 Gelenk 1')
@@ -400,8 +407,9 @@ class RobotSim:
         plt.plot(self.arm2_j1_states[20:], label='Bein 2 Gelenk 1')
         plt.plot(self.arm2_j2_states[20:], label='Bein 2 Gelenk 2')
         plt.legend()
-        plt.savefig("states.png")
-        plt.show()
+        fig_stat.savefig("states.png")
+        # fig_stat.close()
+        # plt.show()
 
     def update(self):
         """
