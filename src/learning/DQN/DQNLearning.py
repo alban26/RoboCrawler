@@ -84,14 +84,15 @@ class DQNLearning(LearningAlgorithm):
         self.policy_network = DQN(input_size, output_size).to(device=self.device)
         self.target_network = DQN(input_size, output_size).to(device=self.device)
 
+        # Target Gewichte werden nie berechnet
         self.target_network.eval()
 
         self.state = self.myRobot.get_state()
         self.last_action_diff = np.zeros(self.myRobot.joints_per_arm_num)
 
         self.memory = ReplayBuffer(capacity=self.MEMORY_SIZE)
-        # self.optimizer = optim.Adam(params=self.policy_network.parameters(), lr=self.LR)
-        self.optimizer = optim.SGD(self.policy_network.parameters(), lr=0.1, momentum=0.9)
+        self.optimizer = optim.Adam(params=self.policy_network.parameters(), lr=self.LR)
+        # self.optimizer = optim.SGD(self.policy_network.parameters(), lr=0.1, momentum=0.9)
 
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.time_step = 0
@@ -176,12 +177,12 @@ class DQNLearning(LearningAlgorithm):
         """Update value parameters using given batch of experience tuples.
         """
         states, actions, rewards, next_states = self.transform_tensor(experiences)
-        # Get max predicted Q values (for next states) from target model
+
         next_q_vals = self.target_network(next_states).detach().max(1)[0].unsqueeze(1)
-        # Compute Q targets for current states
+        # Target Q values
         target_q_vals = rewards + (self.GAMMA * next_q_vals)
 
-        # Get expected Q values from local model
+        # Expected Q values
         expected_q_vals = self.policy_network(states).gather(1, actions)
 
         loss = F.mse_loss(expected_q_vals, target_q_vals)
@@ -189,7 +190,6 @@ class DQNLearning(LearningAlgorithm):
         loss.backward()
         self.optimizer.step()
 
-        # ------------------- update target network ------------------- #
         self.target_update()
 
     def transform_tensor(self, experiences):

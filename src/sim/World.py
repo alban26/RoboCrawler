@@ -114,6 +114,7 @@ class World:
                     break
             if counter % 100 == 0:
                 self.robot_sim.step_counter()
+                # Beim berechnen der Reward-Tabelle oder des NNs auskommentieren
                 self.robot_sim.collect_steps()
 
             counter += 1
@@ -139,13 +140,10 @@ class World:
         # self.print_vel()
 
         # Daten zur Auswertung sammeln
-
+        # Beim berechnen der Reward-Tabelle oder des NNs auskommentieren
         self.robot_sim.collect_angles()
         self.robot_sim.collect_states()
 
-        # if isinstance(self.robot, RobotDiscrete):
-        #     if abs(reward) < self.reward_cap:  # cap reward to not learn from noise
-        #         reward = 0
 
         # logging.debug("State: {}".format(self.robot.state))
         # logging.debug("Reward: {}".format(reward))

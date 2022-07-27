@@ -18,7 +18,9 @@ from learning.LearningAlgorithm import LearningAlgorithm
 class ValueIteration(LearningAlgorithm):
     GAMMA = 0.98
 
-    load = True
+    # True = load reward from reward-directory (.pkl-file)
+    # False = calculate new reward table
+    load = False
 
     def __init__(self, myRobot, myWorld, ex):
 
@@ -46,37 +48,27 @@ class ValueIteration(LearningAlgorithm):
 
     def calc_reward(self):
         all_possible_state_action_pairs = self.myRobot.get_all_possible_state_action().copy()
-        reward_tables = []
-        k = 1
-        for _ in range(k):
-            n = 0
-            N = len(all_possible_state_action_pairs)
-            for state_action in all_possible_state_action_pairs:
-                self.myRobot.state = state_action[0].copy()
-                self.state = state_action[0].copy()
-                self.myWorld.reset_sim()
-                action_diff = self.myRobot.action_to_diff[state_action[1]]
 
-                next_state = self.myRobot.apply_action(action_diff)
+        n = 0
+        N = len(all_possible_state_action_pairs)
+        for state_action in all_possible_state_action_pairs:
+            self.myRobot.state = state_action[0].copy()
+            self.state = state_action[0].copy()
+            self.myWorld.reset_sim()
+            action_diff = self.myRobot.action_to_diff[state_action[1]]
 
-                action_diff = np.array(action_diff)
-                reward = self.myWorld.step_reward()
+            next_state = self.myRobot.apply_action(action_diff)
 
-                self.reward[tuple(state_action[0].flatten()) + (state_action[1],)] = reward
+            action_diff = np.array(action_diff)
+            reward = self.myWorld.step_reward()
 
-                self.last_action_diff = action_diff
-                n += 1
-                if n % 1000 == 0:
-                    print('\rIteration {}/{}'.format(n, N), end="")
+            self.reward[tuple(state_action[0].flatten()) + (state_action[1],)] = reward
 
-            reward_tables.append(self.reward)
-            print(reward_tables)
+            self.last_action_diff = action_diff
+            n += 1
+            if n % 1000 == 0:
+                print('\rIteration {}/{}'.format(n, N), end="")
 
-        # Mittelt die Reward Tabellen
-        reward_mean = np.zeros(self.reward.shape)
-        for rt in reward_tables:
-            reward_mean += rt
-        self.reward = reward_mean / k
 
         save_reward_string = datetime.now().strftime("%M_%S_%MS")
         pickle.dump(self.reward, open(f"../rewards/{save_reward_string}-15-fast.pkl", "wb"))
