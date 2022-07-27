@@ -200,13 +200,9 @@ class DQNLearning(LearningAlgorithm):
                torch.tensor(next_states.reshape(-1, 4), dtype=torch.float32)
 
     def target_update(self):
-        """Soft update model parameters.
+        """
         θ_target = τ*θ_local + (1 - τ)*θ_target
-        Params
-        ======
-            local_model (PyTorch model): weights will be copied from
-            target_model (PyTorch model): weights will be copied to
-            tau (float): interpolation parameter
+        TD-Learning: Gewichte werden mit einer Gewichtung (TAU) vom policy_network ins target_model kopiert.
         """
         for target_param, policy_param in zip(self.target_network.parameters(), self.policy_network.parameters()):
             # target_param.data.copy_(policy_param.data)
